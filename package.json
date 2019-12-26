@@ -1,7 +1,7 @@
 {
   "name": "canvas-orgchart",
   "version": "1.0.0",
-  "description": "draw orgchart/familychart with canvas",
+  "description": "draw orgchart/genealogychart with canvas",
   "main": "index.js",
   "scripts": {
     "dev": "webpack-dev-server",

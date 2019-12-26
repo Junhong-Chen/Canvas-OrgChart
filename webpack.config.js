@@ -74,7 +74,7 @@ module.exports = {
     open: false
   },
   // 此选项控制是否生成，以及如何生成 source-map。reference-link: https://www.webpackjs.com/configuration/devtool/
-  devtool: 'source-map', // 这个配置('source-map')会将整个 source map 作为一个单独的文件生成，在生成环境中不建议使用
+  // devtool: 'source-map', // 这个配置('source-map')会将整个 source map 作为一个单独的文件生成，在生成环境中不建议使用
   watch: false, // 编译时监听文件变化，实时更新编译后的文件
   watchOptions: {
     poll: 1000,
