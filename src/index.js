@@ -11,6 +11,8 @@ const config = {
   originY: 0,
   width: 0,
   height: 0,
+  padding: [24, 30, 10, 50],
+  scale: [1, 1],
   nodeWidth: 60,
   nodeHeight: 160,
   nodeSpacing: [20, 20],
@@ -21,8 +23,8 @@ const config = {
       attributeName: 'sex',
       checkOwn: false,
       color: {
-        0: 'CORNFLOWERBLUE',
-        1: 'LIGHTCORAL'
+        0: 'cornflowerblue',
+        1: 'lightcoral'
       }
     },
     {
@@ -44,9 +46,7 @@ const config = {
   //       ctx.fillStyle = that.defaultColor
   //       if (that.customColors.length > 0) {
   //         for (let color of that.customColors) {
-  //           if (color.own && Object.prototype.hasOwnProperty.call(node, color.attributeName)) {
-  //             ctx.fillStyle = color.color
-  //           } else if (node[color.attributeName]) {
+  //           if (color.own && Object.prototype.hasOwnProperty.call(node, color.attributeName) || node[color.attributeName]) {
   //             ctx.fillStyle = color.color
   //           }
   //         }
@@ -66,9 +66,7 @@ const config = {
   //   // node color
   //   ctx.fillStyle = that.defaultColor
   //   for (let paint of that.customColors) {
-  //     if (paint.checkOwn && Object.prototype.hasOwnProperty.call(node, paint.attributeName)) {
-  //       typeof(paint.color) === 'string' ? ctx.fillStyle = paint.color : ctx.fillStyle = paint.color[node[paint.attributeName]]
-  //     } else if (node[paint.attributeName] !== undefined) {
+  //     if (paint.checkOwn && Object.prototype.hasOwnProperty.call(node, paint.attributeName) || node[paint.attributeName] !== undefined) {
   //       typeof(paint.color) === 'string' ? ctx.fillStyle = paint.color : ctx.fillStyle = paint.color[node[paint.attributeName]]
   //     }
   //   }

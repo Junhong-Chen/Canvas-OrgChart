@@ -33,16 +33,16 @@ const data = {
       sex: 1,
       children: [
         {
-          name: '外孙',
+          name: '外甥',
           avatar: '',
-          generation: 4,
+          generation: 3,
           sex: 0,
           children: []
         },
         {
-          name: '外孙女',
+          name: '外甥女',
           avatar: '',
-          generation: 4,
+          generation: 3,
           sex: 1,
           children: []
         }
@@ -71,7 +71,22 @@ const data = {
               avatar: '',
               generation: 4,
               sex: 0,
-              children: []
+              children: [
+                {
+                  name: '曾孙',
+                  avatar: '',
+                  generation: 5,
+                  sex: 0,
+                  children: []
+                },
+                {
+                  name: '曾孙女',
+                  avatar: '',
+                  generation: 5,
+                  sex: 1,
+                  children: []
+                }
+              ]
             },
             
             {
@@ -79,7 +94,22 @@ const data = {
               avatar: '',
               generation: 4,
               sex: 1,
-              children: []
+              children: [
+                {
+                  name: '外曾孙',
+                  avatar: '',
+                  generation: 5,
+                  sex: 0,
+                  children: []
+                },
+                {
+                  name: '外曾孙女',
+                  avatar: '',
+                  generation: 5,
+                  sex: 1,
+                  children: []
+                }
+              ]
             }
           ]
         },
