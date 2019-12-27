@@ -4,7 +4,7 @@ import imageError from '../public/images/image-error.png'
 
 export default class CanvasOrgChart {
   _lastClickNode = null
-  get value() {
+  get currentSelected() {
     return this._lastClickNode
   }
   _isFindNode = false
@@ -95,7 +95,7 @@ export default class CanvasOrgChart {
    * @method 绘图
    * @param {object} current
    */
-  drawChart(ctx, current, hasFather) {
+  drawChart(ctx, current) {
     const length = current.children.length
     if (Array.isArray(this.customNode) && this.customNode.length > 0) {
       for (let node of this.customNode) {
@@ -115,7 +115,7 @@ export default class CanvasOrgChart {
     ctx.strokeStyle = 'black'
     ctx.lineWidth = 2
     const halfWidth = this.nodeWidth / 2
-    if (hasFather) {
+    if (current.y > this.originY) {
       ctx.moveTo(current.x + halfWidth, current.y)
       ctx.lineTo(current.x + halfWidth, current.y - this.nodeVerticalSpacing / 2)
       ctx.stroke()
@@ -129,7 +129,7 @@ export default class CanvasOrgChart {
       this.drawLine(ctx, [current.children[0].x + halfWidth, y], [current.children[length - 1].x + halfWidth, y])
 
       for (let item of current.children) {
-        this.drawChart(ctx, item, true)
+        this.drawChart(ctx, item)
       }
     }
   }
@@ -247,42 +247,37 @@ export default class CanvasOrgChart {
   }
 
   /**
-   * @method 绘制选中样式
+   * @method 选中样式
    * @param {object} ctx: CanvasRenderingContext2D
    * @param {number} x: 起始横坐标
    * @param {number} y: 起始纵坐标
    * @param {number} width: 宽度
    * @param {number} height: 高度
    */
-  drawSelected(ctx, x, y, width, height) {
-    x -= 1
-    y -= 1
-    width += 2
-    height += 2
-    ctx.strokeStyle = 'black'
-    this.drawLine(ctx, [x, y], [x + width, y])
-    this.drawLine(ctx, [x + width, y], [x + width, y + height])
-    this.drawLine(ctx, [x + width, y + height], [x, y + height])
-    this.drawLine(ctx, [x, y + height], [x, y])
-  }
-
-  clearSelected(ctx, node, width, height) {
+  drawSelected(ctx, node, width, height, isClean = false) {
     const x = node.x - 1
     const y = node.y - 1
     width += 2
     height += 2
-    ctx.strokeStyle = 'white'
+    ctx.lineCap = 'round'
+    if (isClean) {
+      ctx.strokeStyle = 'white'
+    } else {
+      ctx.strokeStyle = 'black'
+    }
     this.drawLine(ctx, [x, y], [x + width, y])
     this.drawLine(ctx, [x + width, y], [x + width, y + height])
     this.drawLine(ctx, [x + width, y + height], [x, y + height])
     this.drawLine(ctx, [x, y + height], [x, y])
-    if (node.y > this.originY) {
+    if (isClean) {
       ctx.strokeStyle = 'black'
-      this.drawLine(ctx, [x + width / 2, y - 1], [x + width / 2, y + 1])
-    }
-    if (node.children.length > 0) {
-      ctx.strokeStyle = 'black'
-      this.drawLine(ctx, [x + width / 2, y + height - 1], [x + width / 2, y + height + 1])
+      ctx.lineCap = 'butt'
+      if (node.y > this.originY) {
+        this.drawLine(ctx, [x + width / 2, y - 1], [x + width / 2, y + 1])
+      }
+      if (node.children.length > 0) {
+        this.drawLine(ctx, [x + width / 2, y + height - 1], [x + width / 2, y + height + 1])
+      }
     }
   }
 
@@ -319,13 +314,16 @@ export default class CanvasOrgChart {
           if (!that._isFindNode) {
             // 删除 selected 样式
             if (that._lastClickNode) {
-              that.clearSelected(that.ctx, that._lastClickNode, that.nodeWidth, that.nodeHeight)
+              that.drawSelected(that.ctx, that._lastClickNode, that.nodeWidth, that.nodeHeight, true)
             }
             that._lastClickNode = null
           }
         }
       } else {
         // invalid range
+        if (that._lastClickNode) {
+          that.drawSelected(that.ctx, that._lastClickNode, that.nodeWidth, that.nodeHeight, true)
+        }
         that._lastClickNode = null
       }
     })
@@ -340,11 +338,11 @@ export default class CanvasOrgChart {
   isClickNode(current, x, y) {
     if (this.isPointInRect([current.x, current.y], this.nodeWidth, this.nodeHeight, x, y)) {
       if (this._lastClickNode) {
-        this.clearSelected(this.ctx, this._lastClickNode, this.nodeWidth, this.nodeHeight)
+        this.drawSelected(this.ctx, this._lastClickNode, this.nodeWidth, this.nodeHeight, true)
       }
       this._lastClickNode = current
       this._isFindNode = true
-      this.drawSelected(this.ctx, current.x, current.y, this.nodeWidth, this.nodeHeight)
+      this.drawSelected(this.ctx, current, this.nodeWidth, this.nodeHeight)
       return
     }
     if (current.children.length > 0 && !this._isFindNode) {

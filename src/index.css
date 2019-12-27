@@ -1,0 +1,33 @@
+@keyframes typing {
+  from {
+    width: 0;
+  }
+}
+@keyframes caret {
+  50% {
+    border-color: currentColor;
+  }
+}
+
+h1 {
+  font: bold 200% Consolas, Monaco, monospace;
+  width: 26ch;
+  border-right: 1px solid transparent;
+  overflow: hidden;
+  white-space: nowrap;
+  animation: typing 3s steps(26),
+             caret 1s steps(1) infinite;
+}
+
+button {
+  padding: 10px 15px;
+  border: none;
+  color: white;
+  background: black;
+  transition: all .5s;
+}
+
+button:hover {
+  transform: translateY(-1px);
+  box-shadow: 4px 4px 8px -4px dimgrey;
+}

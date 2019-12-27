@@ -1,9 +1,8 @@
+require('./index.css')
 import CanvasOrgChart from './canvas-orgchart'
-
 import data from '../public/mock/data'
 
 const $ = document.querySelector.bind(document)
-
 const canvas = $('canvas')
 
 const config = {
@@ -83,3 +82,7 @@ const config = {
 const canvasOrgChart = new CanvasOrgChart(config)
 
 canvasOrgChart.render(canvas, data)
+
+$('button').addEventListener('click', function() {
+  alert(canvasOrgChart.currentSelected ? canvasOrgChart.currentSelected.name : '未选中任何节点')
+}, false)

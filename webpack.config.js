@@ -1,5 +1,6 @@
 const path = require('path')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
+const MiniCssExtractPlugin = require('mini-css-extract-plugin')
 const webpack = require('webpack')
 const { CleanWebpackPlugin } = require('clean-webpack-plugin')
 
@@ -52,6 +53,13 @@ module.exports = {
         include: path.resolve(__dirname, 'src'),
         exclude: /node_modules/
       },
+      {
+        test: /\.css$/,
+        use: [
+          MiniCssExtractPlugin.loader,
+          'css-loader'
+        ]
+      },
     ]
   },
   plugins: [
@@ -63,6 +71,9 @@ module.exports = {
         removeAttributeQuotes: true,
         collapseWhitespace: true
       },
+    }),
+    new MiniCssExtractPlugin({
+      filename: 'css/index.css',
     }),
     new CleanWebpackPlugin(),
     new webpack.BannerPlugin('author: Junhong-Chen')
