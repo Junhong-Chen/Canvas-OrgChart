@@ -129,7 +129,7 @@ const data = {
             },
             {
               name: '外孙女',
-              avatar: '',
+              avatar: 'xx',
               generation: 4,
               sex: 1,
               children: []

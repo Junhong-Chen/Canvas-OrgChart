@@ -1,6 +1,5 @@
 import maleAvatar from '../public/images/male.jpg'
 import femaleAvatar from '../public/images/female.jpg'
-import imageError from '../public/images/image-error.png'
 
 export default class CanvasOrgChart {
   _lastClickNode = null
@@ -135,35 +134,21 @@ export default class CanvasOrgChart {
   }
 
   /**
-   * @method 绘制实线
+   * @method 绘线
    * @param {object} ctx: CanvasRenderingContext2D
    * @param {array} start: 起始坐标
    * @param {array} end: 结束坐标
    */
-  drawLine(ctx, start, end) {
+  drawLine(ctx, start, end, dash) {
     ctx.beginPath()
     // 设置线宽，宽度如果为奇数会导致像素渲染时侵染，reference-link: https://developer.mozilla.org/zh-CN/docs/Web/API/Canvas_API/Tutorial/Applying_styles_and_colors
     ctx.lineWidth = 2
-    ctx.moveTo(...start)
-    ctx.lineTo(...end)
-    ctx.stroke()
-    ctx.closePath()
-  }
-
-  /**
-   * @method 绘制虚线
-   * @param {object} ctx: CanvasRenderingContext2D
-   * @param {array} start: 起始坐标
-   * @param {array} end: 结束坐标
-   */
-  drawDottedLine(ctx, start, end) {
-    ctx.beginPath()
-    ctx.lineWidth = 2
     // 设置间距（参数为无限数组，虚线的样式随数组循环）
-    ctx.setLineDash([4, 3])
+    if (dash) {
+      ctx.setLineDash([4, 3])
+    }
     ctx.moveTo(...start)
     ctx.lineTo(...end)
-    ctx.strokeStyle = 'black'
     ctx.stroke()
     ctx.closePath()
   }
@@ -215,11 +200,11 @@ export default class CanvasOrgChart {
     } else {
       img.src = maleAvatar
     }
-    img.onerror = function() {
-      this.src = imageError
-    }
     img.onload = function() {
       ctx.drawImage(this, x, y, that.nodeWidth, that.nodeWidth)
+    }
+    img.onerror = function() {
+      that.drawImageError(ctx, x, y, that.nodeWidth, that.nodeWidth)
     }
   }
 
@@ -234,7 +219,7 @@ export default class CanvasOrgChart {
   drawVerticalText(ctx, x, y, content) {
     const height = this.nodeHeight - this.nodeWidth
     const fontSize = 22
-    let spacing = (height - content.length * fontSize - 10) / (content.length - 1) // 10 是整体文字的上下总间距
+    let spacing = (height - content.length * fontSize - 10) / (content.length - 1) // 10 是整体文字的上下总边距
     ctx.font = `${fontSize}px serif`
     ctx.textBaseline = 'bottom'
     ctx.fillStyle = 'white'
@@ -395,5 +380,64 @@ export default class CanvasOrgChart {
   getCrossProduct (p, p1, p2) {
     return (p2.x - p1.x) * (p.y - p1.y) - (p.x - p1.x) * (p2.y - p1.y)
   }
-    
+
+  /**
+   * @method 图片错误
+   * @param {object} ctx: CanvasRenderingContext2D
+   * @param {number} x
+   * @param {number} y
+   * @param {number} width
+   * @param {number} height
+   */
+  drawImageError(ctx, x, y, width, height) {
+    const mountainHeigh = height / 2
+    const mountainWidth = width / 5.5
+    const fontSize = width / 4
+    const offsetY = width / 14
+    ctx.beginPath()
+    ctx.fillStyle = 'darkgray'
+    ctx.strokeStyle = 'white'
+    ctx.fillRect(x, y, width, height)
+    ctx.fillStyle = 'white'
+    ctx.font = `${fontSize}px serif`
+    ctx.fillText('暂无', x + fontSize / 3, y + fontSize / 2 * 3)
+    ctx.fillText('图片', x + fontSize / 3, y + fontSize / 2 * 5)
+    ctx.arc(x + width - mountainWidth, y + height / 4, fontSize / 3, 0, Math.PI*2)
+
+    const tempHeight = y + height - mountainHeigh / 2
+    ctx.lineWidth = 2
+    ctx.moveTo(x + 0, y + height)
+    ctx.lineTo(x + mountainWidth, tempHeight)
+    this.drawMountain(ctx, [x + mountainWidth, tempHeight], [x + mountainWidth * 2, tempHeight], offsetY)
+    this.drawMountain(ctx, [x + mountainWidth * 2, tempHeight], [x + mountainWidth * 3 , tempHeight], offsetY, true)
+    ctx.lineTo(x + mountainWidth * 4, y + height - mountainHeigh)
+    this.drawMountain(ctx, [x + mountainWidth * 4, y + height - mountainHeigh], [x + mountainWidth * 5, y + height - mountainHeigh], offsetY)
+    ctx.lineTo(x + width, y + height - mountainHeigh + mountainWidth * .6)
+    ctx.stroke()
+    ctx.closePath()
+  }
+
+  /**
+   * @method 山峰
+   * @param {object} ctx: CanvasRenderingContext2D
+   * @param {array} start
+   * @param {array} end
+   * @param {number} offsetY
+   * @param {boolean} rotate
+   */
+  drawMountain(ctx, start, end, offsetY, rotate = false) {
+    if (rotate) {
+      offsetY *= -1
+    }
+    ctx.moveTo(...start)
+    const cp0 = {
+      x: start[0] + (end[0] - start[0]) / 4,
+      y: start[1] - offsetY
+    }
+    const cp1 = {
+      x: end[0] - (end[0] - start[0]) / 4,
+      y: end[1] - offsetY
+    }
+    ctx.bezierCurveTo(cp0.x, cp0.y, cp1.x, cp1.y, ...end)
+  }
 }
