@@ -65,6 +65,7 @@ const data = {
           avatar: '',
           generation: 3,
           sex: 0,
+          mySon: true,
           children: [
             {
               name: '孙子',

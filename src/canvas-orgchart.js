@@ -16,33 +16,53 @@ export default class CanvasOrgChart {
     this.scale = config.scale || [1, 1]
     this.nodeWidth = parseInt(config.nodeWidth) || 60
     this.nodeHeight = parseInt(config.nodeHeight) || 160
+    this.nodeColor = config.nodeColor
+    this.nodeBackground = config.nodeBackground || 'DODGERBLUE'
+    this.customNodeBackgrounds = config.customNodeBackgrounds || []
+    this.customNodes = config.customNodes || []
+    this.formatParams()
     this.nodeHorizontalSpacing = parseInt( config.nodeSpacing[0]) || 20
     this.nodeVerticalSpacing = parseInt(config.nodeSpacing[1]) || 20
     this.originX = parseInt(config.originX) || 0 + this.padding[3]
     this.originY = parseInt(config.originY) || 0 + this.padding[0]
-    this.customColors = config.customColors || []
-    this.defaultColor = config.defaultColor || 'DODGERBLUE'
-    this.customNode = config.customNode || []
     this.ctx = null
     this._chartWidth = this.originX
     this.verifyParameter()
   }
 
   verifyParameter() {
-    if (!Array.isArray(this.customColors)) {
-      throw new TypeError('config.customColors must be an array.')
+    if (!Array.isArray(this.customNodeBackgrounds)) {
+      throw new TypeError('config.customNodeBackgrounds must be an array.')
     }
     if (!Array.isArray(this.padding) || this.padding.length < 1) {
-      throw new TypeError('config.customColors must be an non-empty array.')
+      throw new TypeError('config.padding must be an non-empty array.')
     }
     if (!Array.isArray(this.scale)) {
-      throw new TypeError('config.customColors must be an array.')
+      throw new TypeError('config.scale must be an array.')
     }
-    if (typeof(this.defaultColor) !== 'string') {
-      throw new TypeError('config.defaultColor must be a string.')
+    if (typeof(this.nodeBackground) !== 'string') {
+      throw new TypeError('config.nodeBackground must be a string.')
     }
-    if (typeof(this.customNode) !== 'function' && !Array.isArray(this.customNode)) {
+    if (typeof(this.customNodes) !== 'function' && !Array.isArray(this.customNodes)) {
       throw new TypeError('config.customNode must be a function or an array.')
+    }
+  }
+
+  formatParams() {
+    let length = this.padding.length
+    switch (length) {
+      case 1:
+        this.padding[1] = this.padding[0]
+        this.padding[2] = this.padding[0]
+        this.padding[3] = this.padding[0]
+        break
+      case 2:
+        this.padding[2] = this.padding[0]
+        this.padding[3] = this.padding[1]
+        break
+      case 3:
+        this.padding[3] = this.padding[1]
+        break
     }
   }
 
@@ -71,6 +91,15 @@ export default class CanvasOrgChart {
   calculateCoordinate(current, layer) {
     const length = current.children.length
     current.y = this.originY + layer * (this.nodeHeight + this.nodeVerticalSpacing)
+    if (Array.isArray(this.customNodes) && this.customNodes.length > 0) {
+      for (let [index, custom] of this.customNodes.entries()) {
+        if (custom.checkOwn && Object.prototype.hasOwnProperty.call(current, custom.attributeName) || current[custom.attributeName]) {
+          current._isCustom = index
+          current._width = custom.width
+          break
+        }
+      }
+    }
     if (current.y > this._chartHeight) {
       this._chartHeight = current.y
     }
@@ -96,16 +125,10 @@ export default class CanvasOrgChart {
    */
   drawChart(ctx, current) {
     const length = current.children.length
-    if (Array.isArray(this.customNode) && this.customNode.length > 0) {
-      for (let node of this.customNode) {
-        if (node.checkOwn && Object.prototype.hasOwnProperty.call(current, node.attributeName) || current[node.attributeName]) {
-          node.draw(this, ctx, current.x, current.y, current)
-        } else {
-          this.drawNode(ctx, current.x, current.y, current)
-        }
-      }
-    } else if (typeof(this.customNode) === 'function') {
-      this.customNode(this, ctx, current.x, current.y, current)
+    if (typeof(this.customNodes) === 'function') {
+      this.customNodes(this, ctx, current.x, current.y, current)
+    } else if (current._isCustom !== undefined) {
+      this.customNodes[current._isCustom].draw(this, ctx, current.x, current.y, current)
     } else {
       this.drawNode(ctx, current.x, current.y, current)
     }
@@ -163,8 +186,8 @@ export default class CanvasOrgChart {
   drawNode(ctx, x, y, node) {
     this.drawAvatar(ctx, x, y, node)
     // node color
-    ctx.fillStyle = this.defaultColor
-    for (let paint of this.customColors) {
+    ctx.fillStyle = this.nodeBackground
+    for (let paint of this.customNodeBackgrounds) {
       if (paint.checkOwn && Object.prototype.hasOwnProperty.call(node, paint.attributeName) || node[paint.attributeName] !== undefined) {
         typeof(paint.color) === 'string' ? ctx.fillStyle = paint.color : ctx.fillStyle = paint.color[node[paint.attributeName]]
       }
@@ -222,7 +245,7 @@ export default class CanvasOrgChart {
     let spacing = (height - content.length * fontSize - 10) / (content.length - 1) // 10 是整体文字的上下总边距
     ctx.font = `${fontSize}px serif`
     ctx.textBaseline = 'bottom'
-    ctx.fillStyle = 'white'
+    ctx.fillStyle = this.nodeColor
     x += (this.nodeWidth / 2 - fontSize / 2)
     y += fontSize + (10 / 2)
     for (let single of content.split('')) {
@@ -240,8 +263,12 @@ export default class CanvasOrgChart {
    * @param {number} height: 高度
    */
   drawSelected(ctx, node, width, height, isClean = false) {
-    const x = node.x - 1
+    let x = node.x - 1
     const y = node.y - 1
+    if (node._width) {
+      x -= (node._width - width) / 2
+      width = node._width
+    }
     width += 2
     height += 2
     ctx.lineCap = 'round'
@@ -288,11 +315,11 @@ export default class CanvasOrgChart {
       const rect = this.getBoundingClientRect()
       const x = (event.clientX - rect.left) / that.scale[0]
       const y = (event.clientY - rect.top) / that.scale[1]
-      // 判断点击坐标是否在 tree chart 绘制范围内和是否重复点击（注：这里还没有处理自定义节点）
+      // 判断点击坐标是否在 tree chart 绘制范围内和是否重复点击
       if (that.isPointInRect([that.originX, that.originY], that._chartWidth - that.padding[3], that._chartHeight - that.padding[0], x, y)) {
         // valid range
         if (that._lastClickNode && that.isPointInRect([that._lastClickNode.x, that._lastClickNode.y], that.nodeWidth, that.nodeHeight, x, y)) {
-          console.log('重复点击')
+          // console.log('重复点击')
         } else {
           that._isFindNode = false
           that.isClickNode(data, x, y)
