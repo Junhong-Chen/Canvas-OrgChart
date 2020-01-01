@@ -15,6 +15,11 @@ const data = {
           avatar: '',
           generation: 3,
           sex: 0,
+          spouse: {
+            name: '老婆',
+            avatar: '',
+            sex: 1,
+          },
           children: []
         },
         {
@@ -37,6 +42,7 @@ const data = {
           avatar: '',
           generation: 3,
           sex: 0,
+          test: true,
           children: []
         },
         {
@@ -44,6 +50,7 @@ const data = {
           avatar: '',
           generation: 3,
           sex: 1,
+          test: true,
           children: []
         }
       ]
@@ -65,6 +72,11 @@ const data = {
           avatar: '',
           generation: 3,
           sex: 0,
+          spouse: {
+            name: '老婆',
+            avatar: '',
+            sex: 1,
+          },
           mySon: true,
           children: [
             {
@@ -78,6 +90,11 @@ const data = {
                   avatar: '',
                   generation: 5,
                   sex: 0,
+                  spouse: {
+                    name: '老婆',
+                    avatar: '',
+                    sex: 1,
+                  },
                   children: []
                 },
                 {
@@ -85,6 +102,11 @@ const data = {
                   avatar: '',
                   generation: 5,
                   sex: 1,
+                  spouse: {
+                    name: '老公',
+                    avatar: '',
+                    sex: 0,
+                  },
                   children: []
                 }
               ]
@@ -144,12 +166,14 @@ const data = {
       avatar: '',
       generation: 2,
       sex: 0,
+      test: true,
       children: [
         {
           name: '侄子',
           avatar: '',
           generation: 3,
           sex: 0,
+          test: true,
           children: []
         },
         {

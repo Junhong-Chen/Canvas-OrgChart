@@ -70,7 +70,7 @@ export default class CanvasOrgChart {
     if (canvas.getContext) {
       this.ctx = canvas.getContext('2d')
       if (data.name) {
-        this.calculateCoordinate(data, 0)
+        this.customNodes === [] ? this.calculateCoordinate(data, this.originY) : this.calculateCustomCoordinate(data, this.originY)
         this._chartWidth -= this.nodeHorizontalSpacing
         this._chartHeight += this.nodeHeight
         this.setCanvasSize(canvas, this.width || (this._chartWidth + this.padding[1]), this.height || (this._chartHeight + this.padding[2]))
@@ -86,16 +86,44 @@ export default class CanvasOrgChart {
   /**
    * @method 计算坐标
    * @param {object} current
-   * @param {number} layer
+   * @param {number} y
    */
-  calculateCoordinate(current, layer) {
+  calculateCoordinate(current, y) {
     const length = current.children.length
-    current.y = this.originY + layer * (this.nodeHeight + this.nodeVerticalSpacing)
+    current.y = y
+    if (current.y > this._chartHeight) {
+      this._chartHeight = current.y
+    }
+    if (length <= 0) {
+      current.x = this._chartWidth
+      this._chartWidth += this.nodeWidth + this.nodeHorizontalSpacing
+    } else {
+      y += this.nodeHeight + this.nodeVerticalSpacing
+      for (let item of current.children) {
+        this.calculateCoordinate(item, y)
+      }
+      if (length === 1) {
+        current.x = current.children[0].x
+      } else {
+        current.x = Math.round(current.children[0].x + (current.children[length - 1].x - current.children[0].x) / 2)
+      }
+    }
+  }
+
+  /**
+   * @method 计算自定义节点坐标
+   * @param {object} current
+   * @param {number} y
+   */
+  calculateCustomCoordinate(current, y) {
+    const length = current.children.length
+    current.y = y
     if (Array.isArray(this.customNodes) && this.customNodes.length > 0) {
       for (let [index, custom] of this.customNodes.entries()) {
         if (custom.checkOwn && Object.prototype.hasOwnProperty.call(current, custom.attributeName) || current[custom.attributeName]) {
           current._isCustom = index
           current._width = custom.width
+          current._height = custom.height
           break
         }
       }
@@ -105,16 +133,18 @@ export default class CanvasOrgChart {
     }
     if (length <= 0) {
       current.x = this._chartWidth
-      this._chartWidth += this.nodeWidth + this.nodeHorizontalSpacing
+      this._chartWidth += (current._width || this.nodeWidth) + this.nodeHorizontalSpacing 
     } else {
-      layer++
+      y += this.nodeHeight + this.nodeVerticalSpacing
       for (let item of current.children) {
-        this.calculateCoordinate(item, layer)
+        this.calculateCustomCoordinate(item, y)
       }
       if (length === 1) {
         current.x = current.children[0].x
       } else {
-        current.x = current.children[0].x + (current.children[length - 1].x - current.children[0].x) / 2
+        // 如果坐标有小数点，渲染时会模糊
+        const offsetX = ((current.children[0]._width || this.nodeWidth) - this.nodeWidth) / 2 - ((current._width || this.nodeWidth) - this.nodeWidth) / 2
+        current.x = Math.round(current.children[0].x + (current.children[length - 1].x - current.children[0].x) / 2 + offsetX)
       }
     }
   }
@@ -134,21 +164,15 @@ export default class CanvasOrgChart {
     }
 
     // 绘线
-    ctx.strokeStyle = 'black'
-    ctx.lineWidth = 2
-    const halfWidth = this.nodeWidth / 2
+    const tempX = current.x + (current._width || this.nodeWidth) / 2
     if (current.y > this.originY) {
-      ctx.moveTo(current.x + halfWidth, current.y)
-      ctx.lineTo(current.x + halfWidth, current.y - this.nodeVerticalSpacing / 2)
-      ctx.stroke()
+      this.drawLine(ctx, [tempX, current.y], [tempX, current.y - this.nodeVerticalSpacing / 2])
     }
     if (length > 0) {
-      const height = this.nodeHeight - this.nodeWidth
-      ctx.moveTo(current.x + halfWidth, current.y + (this.nodeWidth + height))
-      ctx.lineTo(current.x + halfWidth, current.y + (this.nodeWidth + height) + this.nodeVerticalSpacing / 2)
-      ctx.stroke()
+      const tempY = current.y + (current._height || this.nodeHeight)
+      this.drawLine(ctx, [tempX, tempY], [tempX, tempY + this.nodeVerticalSpacing / 2 + this.nodeHeight - (current._height || this.nodeHeight)])
       const y = current.y + this.nodeHeight + this.nodeVerticalSpacing / 2 + 1
-      this.drawLine(ctx, [current.children[0].x + halfWidth, y], [current.children[length - 1].x + halfWidth, y])
+      this.drawLine(ctx, [current.children[0].x + (current.children[0]._width || this.nodeWidth) / 2, y], [current.children[length - 1].x + (current.children[length - 1]._width || this.nodeWidth) / 2, y])
 
       for (let item of current.children) {
         this.drawChart(ctx, item)
@@ -162,18 +186,13 @@ export default class CanvasOrgChart {
    * @param {array} start: 起始坐标
    * @param {array} end: 结束坐标
    */
-  drawLine(ctx, start, end, dash) {
+  drawLine(ctx, start, end) {
     ctx.beginPath()
     // 设置线宽，宽度如果为奇数会导致像素渲染时侵染，reference-link: https://developer.mozilla.org/zh-CN/docs/Web/API/Canvas_API/Tutorial/Applying_styles_and_colors
     ctx.lineWidth = 2
-    // 设置间距（参数为无限数组，虚线的样式随数组循环）
-    if (dash) {
-      ctx.setLineDash([4, 3])
-    }
     ctx.moveTo(...start)
     ctx.lineTo(...end)
     ctx.stroke()
-    ctx.closePath()
   }
 
   /**
@@ -193,9 +212,10 @@ export default class CanvasOrgChart {
       }
     }
 
-    ctx.fillRect(x, y + this.nodeWidth, this.nodeWidth, this.nodeHeight - this.nodeWidth)
+    const height = this.nodeHeight - this.nodeWidth
+    ctx.fillRect(x, y + this.nodeWidth, this.nodeWidth, height)
     ctx.stroke()
-    this.drawVerticalText(ctx, x, y + this.nodeWidth, node.name)
+    this.drawVerticalText(ctx, x, y + this.nodeWidth, node._width || this.nodeWidth, height, node.name)
   }
 
   /**
@@ -205,7 +225,7 @@ export default class CanvasOrgChart {
    * @param {number} y: 起始纵坐标
    * @param {string} avatarUrl: 头像地址
    */
-  drawAvatar(ctx, x, y, person) {
+  drawAvatar(ctx, x, y, person, width = this.nodeWidth) {
     const img = new Image()
     const that = this
     if (person.avatar) {
@@ -224,10 +244,10 @@ export default class CanvasOrgChart {
       img.src = maleAvatar
     }
     img.onload = function() {
-      ctx.drawImage(this, x, y, that.nodeWidth, that.nodeWidth)
+      ctx.drawImage(this, x, y, width, width)
     }
     img.onerror = function() {
-      that.drawImageError(ctx, x, y, that.nodeWidth, that.nodeWidth)
+      that.drawImageError(ctx, x, y, width, width)
     }
   }
 
@@ -239,15 +259,14 @@ export default class CanvasOrgChart {
    * @param {string} content: 内容
    * @param {number} height: 绘制总长度
    */
-  drawVerticalText(ctx, x, y, content) {
-    const height = this.nodeHeight - this.nodeWidth
+  drawVerticalText(ctx, x, y, width, height, content, margin = 10) {
     const fontSize = 22
-    let spacing = (height - content.length * fontSize - 10) / (content.length - 1) // 10 是整体文字的上下总边距
+    let spacing = (height - content.length * fontSize - margin) / (content.length - 1)
     ctx.font = `${fontSize}px serif`
     ctx.textBaseline = 'bottom'
     ctx.fillStyle = this.nodeColor
-    x += (this.nodeWidth / 2 - fontSize / 2)
-    y += fontSize + (10 / 2)
+    x += (width / 2 - fontSize / 2)
+    y += fontSize + (margin / 2)
     for (let single of content.split('')) {
       ctx.fillText(single, x, y)
       y += fontSize + spacing
@@ -265,10 +284,6 @@ export default class CanvasOrgChart {
   drawSelected(ctx, node, width, height, isClean = false) {
     let x = node.x - 1
     const y = node.y - 1
-    if (node._width) {
-      x -= (node._width - width) / 2
-      width = node._width
-    }
     width += 2
     height += 2
     ctx.lineCap = 'round'
@@ -318,7 +333,7 @@ export default class CanvasOrgChart {
       // 判断点击坐标是否在 tree chart 绘制范围内和是否重复点击
       if (that.isPointInRect([that.originX, that.originY], that._chartWidth - that.padding[3], that._chartHeight - that.padding[0], x, y)) {
         // valid range
-        if (that._lastClickNode && that.isPointInRect([that._lastClickNode.x, that._lastClickNode.y], that.nodeWidth, that.nodeHeight, x, y)) {
+        if (that._lastClickNode && that.isPointInRect([that._lastClickNode.x, that._lastClickNode.y], that._lastClickNode._width || that.nodeWidth, that._lastClickNode._height || that.nodeHeight, x, y)) {
           // console.log('重复点击')
         } else {
           that._isFindNode = false
@@ -326,7 +341,7 @@ export default class CanvasOrgChart {
           if (!that._isFindNode) {
             // 删除 selected 样式
             if (that._lastClickNode) {
-              that.drawSelected(that.ctx, that._lastClickNode, that.nodeWidth, that.nodeHeight, true)
+              that.drawSelected(that.ctx, that._lastClickNode, that._lastClickNode._width || that.nodeWidth, that._lastClickNode._height || that.nodeHeight, true)
             }
             that._lastClickNode = null
           }
@@ -334,7 +349,7 @@ export default class CanvasOrgChart {
       } else {
         // invalid range
         if (that._lastClickNode) {
-          that.drawSelected(that.ctx, that._lastClickNode, that.nodeWidth, that.nodeHeight, true)
+          that.drawSelected(that.ctx, that._lastClickNode, that._lastClickNode._width || that.nodeWidth, that._lastClickNode._height || that.nodeHeight, true)
         }
         that._lastClickNode = null
       }
@@ -348,13 +363,13 @@ export default class CanvasOrgChart {
    * @param {number} y: 点击时的纵坐标
    */
   isClickNode(current, x, y) {
-    if (this.isPointInRect([current.x, current.y], this.nodeWidth, this.nodeHeight, x, y)) {
+    if (this.isPointInRect([current.x, current.y], current._width || this.nodeWidth, current._height || this.nodeHeight, x, y)) {
       if (this._lastClickNode) {
-        this.drawSelected(this.ctx, this._lastClickNode, this.nodeWidth, this.nodeHeight, true)
+        this.drawSelected(this.ctx, this._lastClickNode, this._lastClickNode._width || this.nodeWidth, this._lastClickNode._height || this.nodeHeight, true)
       }
       this._lastClickNode = current
       this._isFindNode = true
-      this.drawSelected(this.ctx, current, this.nodeWidth, this.nodeHeight)
+      this.drawSelected(this.ctx, current, this._lastClickNode._width || this.nodeWidth, this._lastClickNode._height || this.nodeHeight)
       return
     }
     if (current.children.length > 0 && !this._isFindNode) {

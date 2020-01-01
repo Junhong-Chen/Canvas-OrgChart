@@ -42,7 +42,6 @@ const config = {
       checkOwn: true,
       width: 120,
       draw: function(that, ctx, x, y, node) {
-        x -= (this.width - that.nodeWidth) / 2
         that.drawAvatar(ctx, x, y, node)
         that.drawAvatar(ctx, x + this.width / 2, y, node.spouse)
         // node color
@@ -59,8 +58,30 @@ const config = {
         ctx.fillStyle = 'LIGHTCORAL'
         ctx.fillRect(x + this.width / 2, y + that.nodeWidth, that.nodeWidth, that.nodeHeight - that.nodeWidth)
         ctx.stroke()
-        that.drawVerticalText(ctx, x, y + that.nodeWidth, node.name)
-        that.drawVerticalText(ctx, x + this.width / 2, y + that.nodeWidth, node.spouse.name)
+        that.drawVerticalText(ctx, x, y + that.nodeWidth, 60, 100, node.name)
+        that.drawVerticalText(ctx, x + this.width / 2, y + that.nodeWidth, 60, 100, node.spouse.name)
+      }
+    },
+    {
+      attributeName: 'test',
+      checkOwn: true,
+      width: 40,
+      height: 140,
+      draw: function(that, ctx, x, y, node) {
+        that.drawAvatar(ctx, x, y, node, this.width)
+        // node color
+        ctx.fillStyle = that.nodeBackground
+        if (that.customNodeBackgrounds.length > 0) {
+          for (let color of that.customNodeBackgrounds) {
+            if (color.own && Object.prototype.hasOwnProperty.call(node, color.attributeName) || node[color.attributeName]) {
+              ctx.fillStyle = color.color
+            }
+          }
+        }
+      
+        ctx.fillRect(x, y + this.width, this.width, 100)
+        ctx.stroke()
+        that.drawVerticalText(ctx, x, y + this.width, this.width, 100, node.name)
       }
     }
   ],
