@@ -1,6 +1,3 @@
-import maleAvatar from '../public/images/male.jpg'
-import femaleAvatar from '../public/images/female.jpg'
-
 export default class CanvasOrgChart {
   _lastClickNode = null
   get currentSelected() {
@@ -20,6 +17,7 @@ export default class CanvasOrgChart {
     this.nodeBackground = config.nodeBackground || 'DODGERBLUE'
     this.customNodeBackgrounds = config.customNodeBackgrounds || []
     this.customNodes = config.customNodes || []
+    this.defaultAvatar = config.defaultAvatar || ''
     this.formatParams()
     this.nodeHorizontalSpacing = parseInt( config.nodeSpacing[0]) || 20
     this.nodeVerticalSpacing = parseInt(config.nodeSpacing[1]) || 20
@@ -151,10 +149,10 @@ export default class CanvasOrgChart {
 
   /**
    * @method 绘图
+   * @param {object} ctx: CanvasRenderingContext2D
    * @param {object} current
    */
   drawChart(ctx, current) {
-    const length = current.children.length
     if (typeof(this.customNodes) === 'function') {
       this.customNodes(this, ctx, current.x, current.y, current)
     } else if (current._isCustom !== undefined) {
@@ -162,37 +160,7 @@ export default class CanvasOrgChart {
     } else {
       this.drawNode(ctx, current.x, current.y, current)
     }
-
-    // 绘线
-    const tempX = current.x + (current._width || this.nodeWidth) / 2
-    if (current.y > this.originY) {
-      this.drawLine(ctx, [tempX, current.y], [tempX, current.y - this.nodeVerticalSpacing / 2])
-    }
-    if (length > 0) {
-      const tempY = current.y + (current._height || this.nodeHeight)
-      this.drawLine(ctx, [tempX, tempY], [tempX, tempY + this.nodeVerticalSpacing / 2 + this.nodeHeight - (current._height || this.nodeHeight)])
-      const y = current.y + this.nodeHeight + this.nodeVerticalSpacing / 2 + 1
-      this.drawLine(ctx, [current.children[0].x + (current.children[0]._width || this.nodeWidth) / 2, y], [current.children[length - 1].x + (current.children[length - 1]._width || this.nodeWidth) / 2, y])
-
-      for (let item of current.children) {
-        this.drawChart(ctx, item)
-      }
-    }
-  }
-
-  /**
-   * @method 绘线
-   * @param {object} ctx: CanvasRenderingContext2D
-   * @param {array} start: 起始坐标
-   * @param {array} end: 结束坐标
-   */
-  drawLine(ctx, start, end) {
-    ctx.beginPath()
-    // 设置线宽，宽度如果为奇数会导致像素渲染时侵染，reference-link: https://developer.mozilla.org/zh-CN/docs/Web/API/Canvas_API/Tutorial/Applying_styles_and_colors
-    ctx.lineWidth = 2
-    ctx.moveTo(...start)
-    ctx.lineTo(...end)
-    ctx.stroke()
+    this.drawNodeLine(ctx, current)
   }
 
   /**
@@ -226,22 +194,15 @@ export default class CanvasOrgChart {
    * @param {string} avatarUrl: 头像地址
    */
   drawAvatar(ctx, x, y, person, width = this.nodeWidth) {
+    // Object.prototype.hasOwnProperty.call(person, 'sex')
     const img = new Image()
     const that = this
     if (person.avatar) {
       img.src = person.avatar
-    } else if (Object.prototype.hasOwnProperty.call(person, 'sex')){
-      if (typeof(person.sex) === 'number') {
-        if (person.sex) {
-          img.src = femaleAvatar
-        } else {
-          img.src = maleAvatar
-        }
-      } else {
-        img.src = `${person.sex}Avatar`
-      }
+    } else if (typeof(this.defaultAvatar) === 'object' && Object.prototype.hasOwnProperty.call(person, this.defaultAvatar.attributeName)) {
+      img.src = this.defaultAvatar.avatars[person[this.defaultAvatar.attributeName]]
     } else {
-      img.src = maleAvatar
+      img.src = this.defaultAvatar
     }
     img.onload = function() {
       ctx.drawImage(this, x, y, width, width)
@@ -274,6 +235,32 @@ export default class CanvasOrgChart {
   }
 
   /**
+   * @method 绘制连接node的线
+   * @param {object} ctx: CanvasRenderingContext2D
+   * @param {object} node
+   */
+  drawNodeLine(ctx, node) {
+    const length = node.children.length
+    this.drawSelected(ctx, node, node._width || this.nodeWidth, node._height || this.nodeHeight, true)
+    ctx.strokeStyle = 'black'
+    ctx.lineCap = 'butt'
+    const tempX = node.x + (node._width || this.nodeWidth) / 2
+    if (node.y > this.originY) {
+      this.drawLine(ctx, [tempX, node.y - 2], [tempX, node.y - this.nodeVerticalSpacing / 2])
+    }
+    if (length > 0) {
+      const tempY = node.y + (node._height || this.nodeHeight)
+      this.drawLine(ctx, [tempX, tempY + 2], [tempX, tempY + this.nodeVerticalSpacing / 2 + this.nodeHeight - (node._height || this.nodeHeight)])
+      const y = node.y + this.nodeHeight + this.nodeVerticalSpacing / 2 + 1
+      this.drawLine(ctx, [node.children[0].x + (node.children[0]._width || this.nodeWidth) / 2, y], [node.children[length - 1].x + (node.children[length - 1]._width || this.nodeWidth) / 2, y])
+
+      for (let item of node.children) {
+        this.drawChart(ctx, item)
+      }
+    }
+  }
+
+  /**
    * @method 选中样式
    * @param {object} ctx: CanvasRenderingContext2D
    * @param {number} x: 起始横坐标
@@ -296,16 +283,21 @@ export default class CanvasOrgChart {
     this.drawLine(ctx, [x + width, y], [x + width, y + height])
     this.drawLine(ctx, [x + width, y + height], [x, y + height])
     this.drawLine(ctx, [x, y + height], [x, y])
-    if (isClean) {
-      ctx.strokeStyle = 'black'
-      ctx.lineCap = 'butt'
-      if (node.y > this.originY) {
-        this.drawLine(ctx, [x + width / 2, y - 1], [x + width / 2, y + 1])
-      }
-      if (node.children.length > 0) {
-        this.drawLine(ctx, [x + width / 2, y + height - 1], [x + width / 2, y + height + 1])
-      }
-    }
+  }
+
+  /**
+   * @method 绘线
+   * @param {object} ctx: CanvasRenderingContext2D
+   * @param {array} start: 起始坐标
+   * @param {array} end: 结束坐标
+   */
+  drawLine(ctx, start, end) {
+    ctx.beginPath()
+    // 设置线宽，宽度如果为奇数会导致像素渲染时侵染，reference-link: https://developer.mozilla.org/zh-CN/docs/Web/API/Canvas_API/Tutorial/Applying_styles_and_colors
+    ctx.lineWidth = 2
+    ctx.moveTo(...start)
+    ctx.lineTo(...end)
+    ctx.stroke()
   }
 
   /**
@@ -441,7 +433,7 @@ export default class CanvasOrgChart {
     ctx.strokeStyle = 'white'
     ctx.fillRect(x, y, width, height)
     ctx.fillStyle = 'white'
-    ctx.font = `${fontSize}px serif`
+    ctx.font = `${fontSize}px arial`
     ctx.fillText('暂无', x + fontSize / 3, y + fontSize / 2 * 3)
     ctx.fillText('图片', x + fontSize / 3, y + fontSize / 2 * 5)
     ctx.arc(x + width - mountainWidth, y + height / 4, fontSize / 3, 0, Math.PI*2)

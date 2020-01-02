@@ -10,6 +10,7 @@
 }
 
 h1 {
+  display: inline-block;
   font: bold 200% Consolas, Monaco, monospace;
   width: 26ch;
   border-right: 1px solid transparent;
@@ -19,15 +20,28 @@ h1 {
              caret 1s steps(1) infinite;
 }
 
+section {
+  position: absolute;
+  top: 30px;
+  right: 30px;
+}
+
 button {
   padding: 10px 15px;
   border: none;
   color: white;
   background: black;
   transition: all .5s;
+  line-height: 20px;
 }
 
 button:hover {
   transform: translateY(-1px);
   box-shadow: 4px 4px 8px -4px dimgrey;
+}
+
+canvas {
+  background: gainsboro;
+  background-image: linear-gradient(white, 1px, transparent 0), linear-gradient(90deg, white, 1px, transparent 0), linear-gradient(hsla(0,0%,100%,.3), 1px, transparent 0), linear-gradient(90deg, hsla(0,0%,100%,.3), 1px, transparent 0);
+  background-size: 90px 90px, 90px 90px, 30px 30px, 30px 30px;
 }

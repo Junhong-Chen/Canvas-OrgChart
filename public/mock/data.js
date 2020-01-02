@@ -1,6 +1,6 @@
 const data = {
   name: '父亲',
-  avatar: '',
+  avatar: 'test',
   generation: 1,
   sex: 0,
   children: [
@@ -42,7 +42,6 @@ const data = {
           avatar: '',
           generation: 3,
           sex: 0,
-          test: true,
           children: []
         },
         {
@@ -50,7 +49,6 @@ const data = {
           avatar: '',
           generation: 3,
           sex: 1,
-          test: true,
           children: []
         }
       ]
@@ -152,7 +150,7 @@ const data = {
             },
             {
               name: '外孙女',
-              avatar: 'xx',
+              avatar: '',
               generation: 4,
               sex: 1,
               children: []
@@ -166,14 +164,12 @@ const data = {
       avatar: '',
       generation: 2,
       sex: 0,
-      test: true,
       children: [
         {
           name: '侄子',
           avatar: '',
           generation: 3,
           sex: 0,
-          test: true,
           children: []
         },
         {

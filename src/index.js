@@ -1,5 +1,5 @@
 require('./index.css')
-import CanvasOrgChart from './canvas-orgchart'
+import CanvasOrgChart from '../canvas-orgchart'
 import data from '../public/mock/data'
 
 const $ = document.querySelector.bind(document)
@@ -15,12 +15,16 @@ const config = {
   nodeWidth: 60,
   nodeHeight: 160,
   nodeSpacing: [20, 20],
-  background: '',
-  customBackground: function() {
-
-  },
   nodeColor: 'white',
-  nodeBackground: 'gray',
+  nodeBackground: 'cornflowerblue',
+  // defaultAvatar: '/images/male.jpg',
+  defaultAvatar: {
+    attributeName: 'sex',
+    avatars: {
+      0: '/images/male.jpg',
+      1: '/images/female.jpg'
+    }
+  },
   customNodeBackgrounds: [
     {
       attributeName: 'sex',
@@ -61,29 +65,29 @@ const config = {
         that.drawVerticalText(ctx, x, y + that.nodeWidth, 60, 100, node.name)
         that.drawVerticalText(ctx, x + this.width / 2, y + that.nodeWidth, 60, 100, node.spouse.name)
       }
-    },
-    {
-      attributeName: 'test',
-      checkOwn: true,
-      width: 40,
-      height: 140,
-      draw: function(that, ctx, x, y, node) {
-        that.drawAvatar(ctx, x, y, node, this.width)
-        // node color
-        ctx.fillStyle = that.nodeBackground
-        if (that.customNodeBackgrounds.length > 0) {
-          for (let color of that.customNodeBackgrounds) {
-            if (color.own && Object.prototype.hasOwnProperty.call(node, color.attributeName) || node[color.attributeName]) {
-              ctx.fillStyle = color.color
-            }
-          }
-        }
-      
-        ctx.fillRect(x, y + this.width, this.width, 100)
-        ctx.stroke()
-        that.drawVerticalText(ctx, x, y + this.width, this.width, 100, node.name)
-      }
     }
+    // {
+    //   attributeName: 'test',
+    //   checkOwn: true,
+    //   width: 40,
+    //   height: 140,
+    //   draw: function(that, ctx, x, y, node) {
+    //     that.drawAvatar(ctx, x, y, node, this.width)
+    //     // node color
+    //     ctx.fillStyle = that.nodeBackground
+    //     if (that.customNodeBackgrounds.length > 0) {
+    //       for (let color of that.customNodeBackgrounds) {
+    //         if (color.own && Object.prototype.hasOwnProperty.call(node, color.attributeName) || node[color.attributeName]) {
+    //           ctx.fillStyle = color.color
+    //         }
+    //       }
+    //     }
+      
+    //     ctx.fillRect(x, y + this.width, this.width, 100)
+    //     ctx.stroke()
+    //     that.drawVerticalText(ctx, x, y + this.width, this.width, 100, node.name)
+    //   }
+    // }
   ],
   // customNodes: function(that, ctx, x, y, node) {
   //   that.drawAvatar(ctx, x, y + that.nodeHeight - that.nodeWidth, node)
@@ -105,6 +109,15 @@ const canvasOrgChart = new CanvasOrgChart(config)
 
 canvasOrgChart.render(canvas, data)
 
-$('button').addEventListener('click', function() {
+$('.get-current-node').addEventListener('click', function() {
   alert(canvasOrgChart.currentSelected ? canvasOrgChart.currentSelected.name : '未选中任何节点')
+}, false)
+
+$('.export').addEventListener('click', function() {
+  const anchor = document.createElement('a')
+  anchor.download = 'canvas-orgchart.png'
+  anchor.href = canvas.toDataURL('image/png')
+  document.body.appendChild(anchor)
+  anchor.click()
+  anchor.remove()
 }, false)

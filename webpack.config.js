@@ -3,14 +3,19 @@ const HtmlWebpackPlugin = require('html-webpack-plugin')
 const MiniCssExtractPlugin = require('mini-css-extract-plugin')
 const webpack = require('webpack')
 const { CleanWebpackPlugin } = require('clean-webpack-plugin')
+const CopyPlugin = require('copy-webpack-plugin')
 
 module.exports = {
   mode: 'development', // 默认 production
   entry: './src/index.js',
+  // entry: './src/canvas-orgchart.js',
   output: {
     filename: 'bundle.js',
+    // filename: 'canvas-orgchart.js',
     path: path.resolve(__dirname, 'dist'),
-    publicPath: ''
+    publicPath: '',
+    // library: "canvas-orgchart",
+    // libraryTarget: "umd",
   },
   module: {
     rules: [
@@ -30,12 +35,12 @@ module.exports = {
           }
         }
       },
-      {
-        test: /\.js$/,
-        enforce: 'pre',
-        exclude: /node_modules/,
-        loader: 'eslint-loader',
-      },
+      // {
+      //   test: /\.js$/,
+      //   enforce: 'pre',
+      //   exclude: /node_modules/,
+      //   loader: 'eslint-loader',
+      // },
       {
         test: /\.js$/,
         use: {
@@ -76,6 +81,12 @@ module.exports = {
       filename: 'css/index.css',
     }),
     new CleanWebpackPlugin(),
+    new CopyPlugin([
+      {
+        from: 'public/images',
+        to: 'images/',
+      }
+    ]),
     new webpack.BannerPlugin('author: Junhong-Chen')
   ],
   devServer: {
