@@ -1,8 +1,8 @@
 {
   "name": "canvas-orgchart",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "draw orgchart/genealogychart with canvas",
-  "main": "index.js",
+  "main": "canvas-orgchart.js",
   "scripts": {
     "dev": "webpack-dev-server",
     "build": "webpack --config webapck.config.js"
@@ -40,5 +40,9 @@
   },
   "dependencies": {
     "@babel/runtime": "^7.7.7"
-  }
+  },
+  "files": [
+    "canvas-orgchart.js",
+    "README.md"
+  ]
 }

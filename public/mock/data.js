@@ -1,6 +1,6 @@
 const data = {
   name: '父亲',
-  avatar: 'test',
+  avatar: '',
   generation: 1,
   sex: 0,
   children: [

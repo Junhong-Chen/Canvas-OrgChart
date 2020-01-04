@@ -131,7 +131,8 @@ options = {
   ]
 }
 ```
-nodeTemplate can write multiple objects inside,Each object is drawn for a different property.Explain what each of its properties does:
+The nodeTemplate can write multiple objects inside,each object is drawn for a different property.
+Explain what each of its properties does:
 
 |      Name     |      Type     |    Default    |                    Description                   |
 | ------------- | ------------- | ------------- | ------------------------------------------------ |

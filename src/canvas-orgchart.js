@@ -8,7 +8,12 @@ export default class CanvasOrgChart {
   _chartHeight = 0
   constructor(options) {
     if (options === undefined) {
-      options = {}
+      options = {
+        node: {}
+      }
+    }
+    if (options.node === undefined) {
+      options.node = {}
     }
     this.width = parseInt(options.width) || 0
     this.height = parseInt(options.height) || 0

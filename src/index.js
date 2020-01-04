@@ -1,5 +1,5 @@
 require('./index.css')
-import CanvasOrgChart from '../canvas-orgchart'
+import CanvasOrgChart from '../canvas-orgchart' // npm publish 时记住要删除无用的依赖，在这个项目中可以全部删除
 import data from '../public/mock/data'
 
 const $ = document.querySelector.bind(document)
