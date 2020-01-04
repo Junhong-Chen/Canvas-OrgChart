@@ -6,49 +6,54 @@ export default class CanvasOrgChart {
   _isFindNode = false
   _chartWidth = 0
   _chartHeight = 0
-  constructor(config) {
-    this.width = parseInt(config.width) || 0
-    this.height = parseInt(config.height) || 0
-    this.padding = config.padding || [0, 0, 0, 0] // 补充: 需兼容成 css 属性一样
-    this.scale = config.scale || [1, 1]
-    this.nodeWidth = parseInt(config.nodeWidth) || 60
-    this.nodeHeight = parseInt(config.nodeHeight) || 160
-    this.nodeColor = config.nodeColor
-    this.nodeBackground = config.nodeBackground || 'DODGERBLUE'
-    this.customNodeBackgrounds = config.customNodeBackgrounds || []
-    this.customNodes = config.customNodes || []
-    this.defaultAvatar = config.defaultAvatar || ''
+  constructor(options) {
+    if (options === undefined) {
+      options = {}
+    }
+    this.width = parseInt(options.width) || 0
+    this.height = parseInt(options.height) || 0
+    this.scale = options.scale || [1, 1]
+    this.padding = options.padding || [0, 0, 0, 0] // 补充: 需兼容成 css 属性一样
+    this.nodeWidth = parseInt(options.node.width) || 60
+    this.nodeHeight = parseInt(options.node.height) || 160
+    this.nodeSpacing = options.node.spacing || [20, 20]
+    this.nodeColor = options.node.color || 'white'
+    this.nodeBackground = options.node.background || 'cornflowerblue'
+    this.nodeCustomBackgrounds = options.node.customBackgrounds || []
+    this.defaultAvatar = options.node.defaultAvatar || ''
+    this.customAvatar = options.node.customAvatar || null
+    this.nodeTemplate = options.nodeTemplate || []
     this.formatParams()
-    this.nodeHorizontalSpacing = parseInt( config.nodeSpacing[0]) || 20
-    this.nodeVerticalSpacing = parseInt(config.nodeSpacing[1]) || 20
-    this.originX = parseInt(config.originX) || 0 + this.padding[3]
-    this.originY = parseInt(config.originY) || 0 + this.padding[0]
+    this.originX = parseInt(options.originX) || 0 + this.padding[3]
+    this.originY = parseInt(options.originY) || 0 + this.padding[0]
     this.ctx = null
     this._chartWidth = this.originX
     this.verifyParameter()
   }
 
   verifyParameter() {
-    if (!Array.isArray(this.customNodeBackgrounds)) {
-      throw new TypeError('config.customNodeBackgrounds must be an array.')
+    if (!Array.isArray(this.nodeCustomBackgrounds)) {
+      throw new TypeError('nodeCustomBackgrounds must be an array.')
     }
     if (!Array.isArray(this.padding) || this.padding.length < 1) {
-      throw new TypeError('config.padding must be an non-empty array.')
+      throw new TypeError('padding must be an non-empty array.')
+    }
+    if (!Array.isArray(this.nodeSpacing) || this.nodeSpacing.length < 1) {
+      throw new TypeError('nodeSpacing must be an non-empty array.')
     }
     if (!Array.isArray(this.scale)) {
-      throw new TypeError('config.scale must be an array.')
+      throw new TypeError('scale must be an array.')
     }
     if (typeof(this.nodeBackground) !== 'string') {
-      throw new TypeError('config.nodeBackground must be a string.')
+      throw new TypeError('nodeBackground must be a string.')
     }
-    if (typeof(this.customNodes) !== 'function' && !Array.isArray(this.customNodes)) {
-      throw new TypeError('config.customNode must be a function or an array.')
+    if (typeof(this.nodeTemplate) !== 'function' && !Array.isArray(this.nodeTemplate)) {
+      throw new TypeError('customNode must be a function or an array.')
     }
   }
 
   formatParams() {
-    let length = this.padding.length
-    switch (length) {
+    switch (this.padding.length) {
       case 1:
         this.padding[1] = this.padding[0]
         this.padding[2] = this.padding[0]
@@ -62,22 +67,27 @@ export default class CanvasOrgChart {
         this.padding[3] = this.padding[1]
         break
     }
+    if (this.nodeSpacing.length === 1) {
+      this.nodeSpacing[1] = this.nodeSpacing[0]
+    }
   }
 
   render(canvas, data) {
     if (canvas.getContext) {
       this.ctx = canvas.getContext('2d')
-      if (data.name) {
-        this.customNodes === [] ? this.calculateCoordinate(data, this.originY) : this.calculateCustomCoordinate(data, this.originY)
-        this._chartWidth -= this.nodeHorizontalSpacing
+      if (data) {
+        this.nodeTemplate === [] ? this.calculateCoordinate(data, this.originY) : this.calculateCustomCoordinate(data, this.originY)
+        this._chartWidth -= this.nodeSpacing[0]
         this._chartHeight += this.nodeHeight
         this.setCanvasSize(canvas, this.width || (this._chartWidth + this.padding[1]), this.height || (this._chartHeight + this.padding[2]))
         this.ctx.scale(...this.scale)
         this.drawChart(this.ctx, data, false)
         this.bindClick(canvas, data)
+      } else {
+        throw new Error('data can\'t be empty.')
       }
     } else {
-      alert('can\'t get canvas context.')
+      throw new Error('can\'t get canvas context.')
     }
   }
 
@@ -94,9 +104,9 @@ export default class CanvasOrgChart {
     }
     if (length <= 0) {
       current.x = this._chartWidth
-      this._chartWidth += this.nodeWidth + this.nodeHorizontalSpacing
+      this._chartWidth += this.nodeWidth + this.nodeSpacing[0]
     } else {
-      y += this.nodeHeight + this.nodeVerticalSpacing
+      y += this.nodeHeight + this.nodeSpacing[1]
       for (let item of current.children) {
         this.calculateCoordinate(item, y)
       }
@@ -116,8 +126,8 @@ export default class CanvasOrgChart {
   calculateCustomCoordinate(current, y) {
     const length = current.children.length
     current.y = y
-    if (Array.isArray(this.customNodes) && this.customNodes.length > 0) {
-      for (let [index, custom] of this.customNodes.entries()) {
+    if (Array.isArray(this.nodeTemplate) && this.nodeTemplate.length > 0) {
+      for (let [index, custom] of this.nodeTemplate.entries()) {
         if (custom.checkOwn && Object.prototype.hasOwnProperty.call(current, custom.attributeName) || current[custom.attributeName]) {
           current._isCustom = index
           current._width = custom.width
@@ -131,9 +141,9 @@ export default class CanvasOrgChart {
     }
     if (length <= 0) {
       current.x = this._chartWidth
-      this._chartWidth += (current._width || this.nodeWidth) + this.nodeHorizontalSpacing 
+      this._chartWidth += (current._width || this.nodeWidth) + this.nodeSpacing[0] 
     } else {
-      y += this.nodeHeight + this.nodeVerticalSpacing
+      y += this.nodeHeight + this.nodeSpacing[1]
       for (let item of current.children) {
         this.calculateCustomCoordinate(item, y)
       }
@@ -153,10 +163,10 @@ export default class CanvasOrgChart {
    * @param {object} current
    */
   drawChart(ctx, current) {
-    if (typeof(this.customNodes) === 'function') {
-      this.customNodes(this, ctx, current.x, current.y, current)
+    if (typeof(this.nodeTemplate) === 'function') {
+      this.nodeTemplate(this, ctx, current.x, current.y, current)
     } else if (current._isCustom !== undefined) {
-      this.customNodes[current._isCustom].draw(this, ctx, current.x, current.y, current)
+      this.nodeTemplate[current._isCustom].draw(this, ctx, current.x, current.y, current)
     } else {
       this.drawNode(ctx, current.x, current.y, current)
     }
@@ -174,7 +184,7 @@ export default class CanvasOrgChart {
     this.drawAvatar(ctx, x, y, node)
     // node color
     ctx.fillStyle = this.nodeBackground
-    for (let paint of this.customNodeBackgrounds) {
+    for (let paint of this.nodeCustomBackgrounds) {
       if (paint.checkOwn && Object.prototype.hasOwnProperty.call(node, paint.attributeName) || node[paint.attributeName] !== undefined) {
         typeof(paint.color) === 'string' ? ctx.fillStyle = paint.color : ctx.fillStyle = paint.color[node[paint.attributeName]]
       }
@@ -199,8 +209,8 @@ export default class CanvasOrgChart {
     const that = this
     if (person.avatar) {
       img.src = person.avatar
-    } else if (typeof(this.defaultAvatar) === 'object' && Object.prototype.hasOwnProperty.call(person, this.defaultAvatar.attributeName)) {
-      img.src = this.defaultAvatar.avatars[person[this.defaultAvatar.attributeName]]
+    } else if (this.customAvatar && Object.prototype.hasOwnProperty.call(person, this.customAvatar.attributeName)) {
+      img.src = this.customAvatar.avatars[person[this.customAvatar.attributeName]]
     } else {
       img.src = this.defaultAvatar
     }
@@ -246,12 +256,12 @@ export default class CanvasOrgChart {
     ctx.lineCap = 'butt'
     const tempX = node.x + (node._width || this.nodeWidth) / 2
     if (node.y > this.originY) {
-      this.drawLine(ctx, [tempX, node.y - 2], [tempX, node.y - this.nodeVerticalSpacing / 2])
+      this.drawLine(ctx, [tempX, node.y - 2], [tempX, node.y - this.nodeSpacing[1] / 2])
     }
     if (length > 0) {
       const tempY = node.y + (node._height || this.nodeHeight)
-      this.drawLine(ctx, [tempX, tempY + 2], [tempX, tempY + this.nodeVerticalSpacing / 2 + this.nodeHeight - (node._height || this.nodeHeight)])
-      const y = node.y + this.nodeHeight + this.nodeVerticalSpacing / 2 + 1
+      this.drawLine(ctx, [tempX, tempY + 2], [tempX, tempY + this.nodeSpacing[1] / 2 + this.nodeHeight - (node._height || this.nodeHeight)])
+      const y = node.y + this.nodeHeight + this.nodeSpacing[1] / 2 + 1
       this.drawLine(ctx, [node.children[0].x + (node.children[0]._width || this.nodeWidth) / 2, y], [node.children[length - 1].x + (node.children[length - 1]._width || this.nodeWidth) / 2, y])
 
       for (let item of node.children) {

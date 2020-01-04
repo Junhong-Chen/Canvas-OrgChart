@@ -3,44 +3,45 @@ import CanvasOrgChart from '../canvas-orgchart'
 import data from '../public/mock/data'
 
 const $ = document.querySelector.bind(document)
-const canvas = $('canvas')
 
-const config = {
-  originX: 0,
-  originY: 0,
+const options = {
   width: 0,
   height: 0,
-  padding: [10, 50],
   scale: [1, 1],
-  nodeWidth: 60,
-  nodeHeight: 160,
-  nodeSpacing: [20, 20],
-  nodeColor: 'white',
-  nodeBackground: 'cornflowerblue',
-  // defaultAvatar: '/images/male.jpg',
-  defaultAvatar: {
-    attributeName: 'sex',
-    avatars: {
-      0: '/images/male.jpg',
-      1: '/images/female.jpg'
-    }
-  },
-  customNodeBackgrounds: [
-    {
+  originX: 0,
+  originY: 0,
+  padding: [10, 50],
+  node: {
+    width: 60,
+    height: 160,
+    spacing: [20, 20],
+    color: 'white',
+    background: 'cornflowerblue',
+    customBackgrounds: [
+      {
+        attributeName: 'sex',
+        checkOwn: false,
+        color: {
+          0: 'cornflowerblue',
+          1: 'lightcoral'
+        }
+      },
+      {
+        attributeName: 'self',
+        checkOwn: true,
+        color: 'black'
+      }
+    ],
+    defaultAvatar: '/images/male.jpg',
+    customAvatar: {
       attributeName: 'sex',
-      checkOwn: false,
-      color: {
-        0: 'cornflowerblue',
-        1: 'lightcoral'
+      avatars: {
+        0: '/images/male.jpg',
+        1: '/images/female.jpg'
       }
     },
-    {
-      attributeName: 'self',
-      checkOwn: true,
-      color: 'black'
-    }
-  ],
-  customNodes: [
+  },
+  nodeTemplate: [
     {
       attributeName: 'spouse',
       checkOwn: true,
@@ -50,8 +51,8 @@ const config = {
         that.drawAvatar(ctx, x + this.width / 2, y, node.spouse)
         // node color
         ctx.fillStyle = that.nodeBackground
-        if (that.customNodeBackgrounds.length > 0) {
-          for (let color of that.customNodeBackgrounds) {
+        if (that.nodeCustomBackgrounds.length > 0) {
+          for (let color of that.nodeCustomBackgrounds) {
             if (color.own && Object.prototype.hasOwnProperty.call(node, color.attributeName) || node[color.attributeName]) {
               ctx.fillStyle = color.color
             }
@@ -59,11 +60,12 @@ const config = {
         }
       
         ctx.fillRect(x, y + that.nodeWidth, that.nodeWidth, that.nodeHeight - that.nodeWidth)
-        ctx.fillStyle = 'LIGHTCORAL'
+        ctx.fillStyle = 'lightcoral'
         ctx.fillRect(x + this.width / 2, y + that.nodeWidth, that.nodeWidth, that.nodeHeight - that.nodeWidth)
         ctx.stroke()
-        that.drawVerticalText(ctx, x, y + that.nodeWidth, 60, 100, node.name)
-        that.drawVerticalText(ctx, x + this.width / 2, y + that.nodeWidth, 60, 100, node.spouse.name)
+        const textHeight = that.nodeHeight - that.nodeWidth
+        that.drawVerticalText(ctx, x, y + that.nodeWidth, that.nodeWidth, textHeight, node.name)
+        that.drawVerticalText(ctx, x + this.width / 2, y + that.nodeWidth, that.nodeWidth, textHeight, node.spouse.name)
       }
     }
     // {
@@ -75,8 +77,8 @@ const config = {
     //     that.drawAvatar(ctx, x, y, node, this.width)
     //     // node color
     //     ctx.fillStyle = that.nodeBackground
-    //     if (that.customNodeBackgrounds.length > 0) {
-    //       for (let color of that.customNodeBackgrounds) {
+    //     if (that.nodeCustomBackgrounds.length > 0) {
+    //       for (let color of that.nodeCustomBackgrounds) {
     //         if (color.own && Object.prototype.hasOwnProperty.call(node, color.attributeName) || node[color.attributeName]) {
     //           ctx.fillStyle = color.color
     //         }
@@ -89,11 +91,11 @@ const config = {
     //   }
     // }
   ],
-  // customNodes: function(that, ctx, x, y, node) {
+  // nodeTemplate: function(that, ctx, x, y, node) {
   //   that.drawAvatar(ctx, x, y + that.nodeHeight - that.nodeWidth, node)
   //   // node color
   //   ctx.fillStyle = that.nodeBackground
-  //   for (let paint of that.customNodeBackgrounds) {
+  //   for (let paint of that.nodeCustomBackgrounds) {
   //     if (paint.checkOwn && Object.prototype.hasOwnProperty.call(node, paint.attributeName) || node[paint.attributeName] !== undefined) {
   //       typeof(paint.color) === 'string' ? ctx.fillStyle = paint.color : ctx.fillStyle = paint.color[node[paint.attributeName]]
   //     }
@@ -105,7 +107,8 @@ const config = {
   // }
 }
 
-const canvasOrgChart = new CanvasOrgChart(config)
+const canvas = $('canvas')
+const canvasOrgChart = new CanvasOrgChart(options)
 
 canvasOrgChart.render(canvas, data)
 
