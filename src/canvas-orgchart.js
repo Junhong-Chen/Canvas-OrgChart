@@ -18,7 +18,7 @@ export default class CanvasOrgChart {
     this.width = parseInt(options.width) || 0
     this.height = parseInt(options.height) || 0
     this.scale = options.scale || [1, 1]
-    this.padding = options.padding || [0, 0, 0, 0] // 补充: 需兼容成 css 属性一样
+    this.padding = options.padding || [0, 0, 0, 0]
     this.nodeWidth = parseInt(options.node.width) || 60
     this.nodeHeight = parseInt(options.node.height) || 160
     this.nodeSpacing = options.node.spacing || [20, 20]

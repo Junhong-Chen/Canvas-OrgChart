@@ -1,8 +1,8 @@
 # Canvas-OrgChart
-draw orgchart/genealogychart with canvas.
+Draw orgchart/genealogychart with canvas.
 
 ## Installation
-Of course, you can directly use the standalone build by including dist/js/canvas-orgchart.js in your webapps.
+Of course, you can directly use the standalone build by including canvas-orgchart.js in your webapps.
 
 ### Install with npm
 ```
@@ -20,7 +20,7 @@ $ npm install canvas-orgchart
 import CanvasOrgChart from 'canvas-orgchart'
 
 const canvas = document.getElementById('canvas')
-const canvasOrgChart = new CanvasOrgChart(config)
+const canvasOrgChart = new CanvasOrgChart(options)
 
 canvasOrgChart.render(canvas, data)
 ```
