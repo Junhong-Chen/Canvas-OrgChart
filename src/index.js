@@ -50,17 +50,18 @@ const options = {
         that.drawAvatar(ctx, x, y, node)
         that.drawAvatar(ctx, x + this.width / 2, y, node.spouse)
         // node color
-        ctx.fillStyle = that.nodeBackground
-        if (that.nodeCustomBackgrounds.length > 0) {
-          for (let color of that.nodeCustomBackgrounds) {
-            if (color.own && Object.prototype.hasOwnProperty.call(node, color.attributeName) || node[color.attributeName]) {
-              ctx.fillStyle = color.color
-            }
-          }
+        if (node.sex === 0) {
+          ctx.fillStyle = 'cornflowerblue'
+        } else {
+          ctx.fillStyle = 'lightcoral'
         }
       
         ctx.fillRect(x, y + that.nodeWidth, that.nodeWidth, that.nodeHeight - that.nodeWidth)
-        ctx.fillStyle = 'lightcoral'
+        if (node.spouse && node.spouse.sex === 0) {
+          ctx.fillStyle = 'cornflowerblue'
+        } else if (node.spouse && node.spouse.sex === 1) {
+          ctx.fillStyle = 'lightcoral'
+        }
         ctx.fillRect(x + this.width / 2, y + that.nodeWidth, that.nodeWidth, that.nodeHeight - that.nodeWidth)
         ctx.stroke()
         const textHeight = that.nodeHeight - that.nodeWidth

@@ -5,7 +5,7 @@
   "main": "canvas-orgchart.js",
   "scripts": {
     "dev": "webpack-dev-server",
-    "build": "webpack --config webapck.config.js"
+    "build": "webpack --config webpack.config.npm.js"
   },
   "repository": {
     "type": "git",
