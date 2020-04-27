@@ -16,7 +16,7 @@ const data = {
           generation: 3,
           sex: 0,
           spouse: {
-            name: '老婆',
+            name: '侄媳',
             avatar: '',
             sex: 1,
           },
@@ -71,7 +71,7 @@ const data = {
           generation: 3,
           sex: 0,
           spouse: {
-            name: '老婆',
+            name: '儿媳',
             avatar: '',
             sex: 1,
           },
@@ -89,7 +89,7 @@ const data = {
                   generation: 5,
                   sex: 0,
                   spouse: {
-                    name: '老婆',
+                    name: '曾孙媳',
                     avatar: '',
                     sex: 1,
                   },
@@ -101,7 +101,7 @@ const data = {
                   generation: 5,
                   sex: 1,
                   spouse: {
-                    name: '老公',
+                    name: '曾孙女婿',
                     avatar: '',
                     sex: 0,
                   },

@@ -50,7 +50,9 @@ const options = {
         that.drawAvatar(ctx, x, y, node)
         that.drawAvatar(ctx, x + this.width / 2, y, node.spouse)
         // node color
-        if (node.sex === 0) {
+        if (node.self) {
+          ctx.fillStyle = 'black'
+        } else if (node.sex === 0) {
           ctx.fillStyle = 'cornflowerblue'
         } else {
           ctx.fillStyle = 'lightcoral'

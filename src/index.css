@@ -16,7 +16,7 @@ h1 {
   border-right: 1px solid transparent;
   overflow: hidden;
   white-space: nowrap;
-  animation: typing 3s steps(26),
+  animation: typing 2s steps(26),
              caret 1s steps(1) infinite;
 }
 
