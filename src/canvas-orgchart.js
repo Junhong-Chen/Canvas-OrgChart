@@ -6,28 +6,24 @@ export default class CanvasOrgChart {
   _isFindNode = false
   _chartWidth = 0
   _chartHeight = 0
-  constructor(options) {
-    if (options === undefined) {
-      options = {
-        node: {}
-      }
-    }
-    if (options.node === undefined) {
-      options.node = {}
-    }
-    this.width = parseInt(options.width) || 0
-    this.height = parseInt(options.height) || 0
-    this.scale = options.scale || [1, 1]
-    this.padding = options.padding || [0, 0, 0, 0]
-    this.nodeWidth = parseInt(options.node.width) || 60
-    this.nodeHeight = parseInt(options.node.height) || 160
-    this.nodeSpacing = options.node.spacing || [20, 20]
-    this.nodeColor = options.node.color || 'white'
-    this.nodeBackground = options.node.background || 'cornflowerblue'
-    this.nodeCustomBackgrounds = options.node.customBackgrounds || []
-    this.defaultAvatar = options.node.defaultAvatar || ''
-    this.customAvatar = options.node.customAvatar || null
-    this.nodeTemplate = options.nodeTemplate || []
+  constructor(options = { node: {} }) {
+    ({
+      scale: this.scale = [1, 1],
+      padding: this.padding = [0, 0, 0, 0],
+      nodeTemplate: this.nodeTemplate = [],
+      defaultAvatar: this.defaultAvatar = '',
+      width: this.width = 0,
+      height: this.height = 0
+    } = options);
+    ({
+      spacing: this.nodeSpacing = [20, 20],
+      color: this.nodeColor = 'white',
+      background: this.nodeBackground = 'cornflowerblue',
+      customBackgrounds: this.nodeCustomBackgrounds = [],
+      customAvatar: this.customAvatar = null,
+      width: this.nodeWidth = 60,
+      height: this.nodeHeight = 160
+    } = options.node || {})
     this.formatParams()
     this.originX = parseInt(options.originX) || 0 + this.padding[3]
     this.originY = parseInt(options.originY) || 0 + this.padding[0]
@@ -51,6 +47,9 @@ export default class CanvasOrgChart {
     }
     if (typeof(this.nodeBackground) !== 'string') {
       throw new TypeError('nodeBackground must be a string.')
+    }
+    if (typeof(this.width) !== 'number' || typeof(this.height) !== 'number' || typeof(this.nodeWidth) !== 'number' || typeof(this.nodeHeight) !== 'number' ) {
+      throw new TypeError('width or height must be a number.')
     }
     if (typeof(this.nodeTemplate) !== 'function' && !Array.isArray(this.nodeTemplate)) {
       throw new TypeError('customNode must be a function or an array.')
