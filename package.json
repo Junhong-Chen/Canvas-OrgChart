@@ -1,6 +1,6 @@
 {
   "name": "canvas-orgchart",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "draw orgchart/genealogychart with canvas",
   "main": "canvas-orgchart.js",
   "scripts": {
