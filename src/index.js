@@ -111,9 +111,8 @@ const options = {
 }
 
 const canvas = $('canvas')
-const canvasOrgChart = new CanvasOrgChart(options)
-
-canvasOrgChart.render(canvas, data)
+const canvasOrgChart = new CanvasOrgChart(canvas, options)
+canvasOrgChart.render(data)
 
 $('.get-current-node').addEventListener('click', function() {
   alert(canvasOrgChart.currentSelected ? canvasOrgChart.currentSelected.name : '未选中任何节点')

@@ -20,9 +20,9 @@ $ npm install canvas-orgchart
 import CanvasOrgChart from 'canvas-orgchart'
 
 const canvas = document.getElementById('canvas')
-const canvasOrgChart = new CanvasOrgChart(options)
+const canvasOrgChart = new CanvasOrgChart(canvas, options)
 
-canvasOrgChart.render(canvas, data)
+canvasOrgChart.render(data)
 ```
 
 ### Structure of Datasource

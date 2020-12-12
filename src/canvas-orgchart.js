@@ -6,7 +6,8 @@ export default class CanvasOrgChart {
   _isFindNode = false
   _chartWidth = 0
   _chartHeight = 0
-  constructor(options = { node: {} }) {
+  constructor(canvas, options = { node: {} }) {
+    this.canvas = canvas;
     ({
       scale: this.scale = [1, 1],
       padding: this.padding = [0, 0, 0, 0],
@@ -33,6 +34,9 @@ export default class CanvasOrgChart {
   }
 
   verifyParameter() {
+    if (!this.canvas || !(this.canvas instanceof HTMLElement)) {
+      throw new Error('Please pass a valid canvas.')
+    }
     if (!Array.isArray(this.nodeCustomBackgrounds)) {
       throw new TypeError('nodeCustomBackgrounds must be an array.')
     }
@@ -76,7 +80,8 @@ export default class CanvasOrgChart {
     }
   }
 
-  render(canvas, data) {
+  render(data) {
+    const canvas = this.canvas
     if (canvas.getContext) {
       this.ctx = canvas.getContext('2d')
       if (data) {
