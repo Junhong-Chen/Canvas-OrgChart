@@ -1,6 +1,6 @@
 export default class CanvasOrgChart {
   _lastClickNode = null
-  get currentSelected() {
+  get selected() {
     return this._lastClickNode
   }
   _isFindNode = false
@@ -26,8 +26,8 @@ export default class CanvasOrgChart {
       height: this.nodeHeight = 160
     } = options.node || {})
     this.formatParams()
-    this.originX = parseInt(options.originX) || 0 + this.padding[3]
-    this.originY = parseInt(options.originY) || 0 + this.padding[0]
+    this.originX = this.padding[3]
+    this.originY = this.padding[0]
     this.ctx = null
     this._chartWidth = this.originX
     this.verifyParameter()

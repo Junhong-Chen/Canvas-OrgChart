@@ -1,4 +1,4 @@
-const data = {
+export default {
   name: '父亲',
   avatar: '',
   generation: 1,
@@ -205,5 +205,3 @@ const data = {
     }
   ]
 }
-
-export default data

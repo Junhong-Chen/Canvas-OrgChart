@@ -1,16 +1,14 @@
-require('./index.css')
-import CanvasOrgChart from '../canvas-orgchart' // npm publish 时记住要删除无用的依赖，在这个项目中可以全部删除
-import data from '../public/mock/data'
+import CanvasOrgChart from '../packages/canvas-orgchart.js' // npm publish 时记住要删除无用的依赖，在这个项目中可以全部删除
+import data from '/static/mock/data.js'
 
 const $ = document.querySelector.bind(document)
 
 const options = {
   width: 0,
   height: 0,
+  direction: 'row',
   scale: [1, 1],
-  originX: 0,
-  originY: 0,
-  padding: [10, 50],
+  padding: [20],
   node: {
     width: 60,
     height: 160,
@@ -32,12 +30,12 @@ const options = {
         color: 'black'
       }
     ],
-    defaultAvatar: '/images/male.jpg',
+    defaultAvatar: '/static/images/male.jpg',
     customAvatar: {
       attributeName: 'sex',
       avatars: {
-        0: '/images/male.jpg',
-        1: '/images/female.jpg'
+        0: '/static/images/male.jpg',
+        1: '/static/images/female.jpg'
       }
     },
   },
@@ -115,7 +113,7 @@ const canvasOrgChart = new CanvasOrgChart(canvas, options)
 canvasOrgChart.render(data)
 
 $('.get-current-node').addEventListener('click', function() {
-  alert(canvasOrgChart.currentSelected ? canvasOrgChart.currentSelected.name : '未选中任何节点')
+  alert(canvasOrgChart.selected ? canvasOrgChart.selected.name : '未选中任何节点')
 }, false)
 
 $('.export').addEventListener('click', function() {

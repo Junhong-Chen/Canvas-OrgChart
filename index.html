@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>canvas-orgchart</title>
+  <style>
+    @keyframes typing {
+      from {
+        width: 0;
+      }
+    }
+    @keyframes caret {
+      50% {
+        border-color: currentColor;
+      }
+    }
+
+    h1 {
+      overflow: hidden;
+      display: inline-block;
+      width: 26ch;
+      border-right: 1px solid transparent;
+      margin: 10px 0;
+      white-space: nowrap;
+      font: bold 200% Consolas, Monaco, monospace;
+      animation: typing 2s steps(26), caret 1s steps(1) infinite;
+    }
+
+    section {
+      position: absolute;
+      top: 30px;
+      right: 30px;
+    }
+
+    button {
+      padding: 10px 15px;
+      border: none;
+      color: white;
+      background: black;
+      transition: all .5s;
+      line-height: 20px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      box-shadow: 4px 4px 8px -4px dimgrey;
+    }
+
+    canvas {
+      background: gainsboro;
+      background-image:
+        linear-gradient(white, 1px, transparent 0),
+        linear-gradient(90deg, white, 1px, transparent 0),
+        linear-gradient(hsla(0,0%,100%,.3), 1px, transparent 0),
+        linear-gradient(90deg, hsla(0,0%,100%,.3), 1px, transparent 0);
+      background-size: 90px 90px, 90px 90px, 30px 30px, 30px 30px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Canvas-OrgChart by Junhong</h1>
+    <section>
+      <button class="get-current-node">获取当前节点</button>
+      <button class="export">导出</button>
+    </section>
+  </header>
+  <canvas>
+    当前浏览器不支持 canvas 元素。(this browser does not support canvas.)
+  </canvas>
+  <script type="module" src="./src/index.js"></script>
+</body>
+</html>
