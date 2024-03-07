@@ -59,11 +59,6 @@ export default {
       generation: 2,
       sex: 0,
       self: true,
-      spouse: {
-        name: '老婆',
-        avatar: '',
-        sex: 1,
-      },
       children: [
         {
           name: '儿子',
@@ -156,28 +151,6 @@ export default {
               children: []
             }
           ]
-        }
-      ]
-    },
-    {
-      name: '弟弟',
-      avatar: '',
-      generation: 2,
-      sex: 0,
-      children: [
-        {
-          name: '侄子',
-          avatar: '',
-          generation: 3,
-          sex: 0,
-          children: []
-        },
-        {
-          name: '侄女',
-          avatar: '',
-          generation: 3,
-          sex: 1,
-          children: []
         }
       ]
     },

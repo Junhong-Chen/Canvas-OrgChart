@@ -1,35 +1,40 @@
+import { pointInRect, reverseAssign } from './utils.js'
+
+const EVENTS = {
+  SELECT: 'select'
+}
+
 export default class CanvasOrgChart {
-  _lastClickNode = null
-  get selected() {
-    return this._lastClickNode
-  }
-  _isFindNode = false
-  _chartWidth = 0
-  _chartHeight = 0
+  #fns = new Map()
+  #chartWidth = 0
+  #chartHeight = 0
   constructor(canvas, options = { node: {} }) {
-    this.canvas = canvas;
+    this.canvas = canvas
+    this.nodeAttr = {}
+    this.options = {};
     ({
-      scale: this.scale = [1, 1],
-      padding: this.padding = [0, 0, 0, 0],
-      nodeTemplate: this.nodeTemplate = [],
-      defaultAvatar: this.defaultAvatar = '',
-      width: this.width = 0,
-      height: this.height = 0
+      width: this.options.width = 0,
+      height: this.options.height = 0,
+      padding: this.options.padding = [0, 0, 0, 0],
+      background: this.options.background = '',
     } = options);
     ({
-      spacing: this.nodeSpacing = [20, 20],
-      color: this.nodeColor = 'white',
-      background: this.nodeBackground = 'cornflowerblue',
-      customBackgrounds: this.nodeCustomBackgrounds = [],
-      customAvatar: this.customAvatar = null,
-      width: this.nodeWidth = 60,
-      height: this.nodeHeight = 160
+      width: this.nodeAttr.width = 0,
+      height: this.nodeAttr.height = 0,
+      spacing: this.nodeAttr.spacing = [20, 20],
+      radii: this.nodeAttr.radii = 8,
+      color: this.nodeAttr.color = 'white',
+      borderColor: this.nodeAttr.borderColor = 'black',
+      background: this.nodeAttr.background = 'cornflowerblue',
+      avatar: this.nodeAttr.avatar = null,
+      name: this.nodeAttr.name = null,
+      desc: this.nodeAttr.desc = null
     } = options.node || {})
     this.formatParams()
-    this.originX = this.padding[3]
-    this.originY = this.padding[0]
+    this.originX = this.options.padding[3]
+    this.originY = this.options.padding[0]
     this.ctx = null
-    this._chartWidth = this.originX
+    this.#chartWidth = this.originX
     this.verifyParameter()
   }
 
@@ -37,46 +42,37 @@ export default class CanvasOrgChart {
     if (!this.canvas || !(this.canvas instanceof HTMLElement)) {
       throw new Error('Please pass a valid canvas.')
     }
-    if (!Array.isArray(this.nodeCustomBackgrounds)) {
-      throw new TypeError('nodeCustomBackgrounds must be an array.')
-    }
-    if (!Array.isArray(this.padding) || this.padding.length < 1) {
+    if (!Array.isArray(this.options.padding) || this.options.padding.length < 1) {
       throw new TypeError('padding must be an non-empty array.')
     }
-    if (!Array.isArray(this.nodeSpacing) || this.nodeSpacing.length < 1) {
+    if (!Array.isArray(this.nodeAttr.spacing) || this.nodeAttr.spacing.length < 1) {
       throw new TypeError('nodeSpacing must be an non-empty array.')
     }
-    if (!Array.isArray(this.scale)) {
-      throw new TypeError('scale must be an array.')
-    }
-    if (typeof(this.nodeBackground) !== 'string') {
+    if (typeof(this.nodeAttr.background) !== 'string') {
       throw new TypeError('nodeBackground must be a string.')
     }
-    if (typeof(this.width) !== 'number' || typeof(this.height) !== 'number' || typeof(this.nodeWidth) !== 'number' || typeof(this.nodeHeight) !== 'number' ) {
+    if (typeof(this.options.width) !== 'number' || typeof(this.options.height) !== 'number' || typeof(this.nodeAttr.width) !== 'number' || typeof(this.nodeAttr.height) !== 'number' ) {
       throw new TypeError('width or height must be a number.')
-    }
-    if (typeof(this.nodeTemplate) !== 'function' && !Array.isArray(this.nodeTemplate)) {
-      throw new TypeError('customNode must be a function or an array.')
     }
   }
 
   formatParams() {
-    switch (this.padding.length) {
+    switch (this.options.padding.length) {
       case 1:
-        this.padding[1] = this.padding[0]
-        this.padding[2] = this.padding[0]
-        this.padding[3] = this.padding[0]
+        this.options.padding[1] = this.options.padding[0]
+        this.options.padding[2] = this.options.padding[0]
+        this.options.padding[3] = this.options.padding[0]
         break
       case 2:
-        this.padding[2] = this.padding[0]
-        this.padding[3] = this.padding[1]
+        this.options.padding[2] = this.options.padding[0]
+        this.options.padding[3] = this.options.padding[1]
         break
       case 3:
-        this.padding[3] = this.padding[1]
+        this.options.padding[3] = this.options.padding[1]
         break
     }
-    if (this.nodeSpacing.length === 1) {
-      this.nodeSpacing[1] = this.nodeSpacing[0]
+    if (this.nodeAttr.spacing.length === 1) {
+      this.nodeAttr.spacing[1] = this.nodeAttr.spacing[0]
     }
   }
 
@@ -84,14 +80,17 @@ export default class CanvasOrgChart {
     const canvas = this.canvas
     if (canvas.getContext) {
       this.ctx = canvas.getContext('2d')
+      /* 设置线宽，宽度如果为奇数会导致像素渲染时侵染
+      * reference-link: https://developer.mozilla.org/zh-CN/docs/Web/API/Canvas_API/Tutorial/Applying_styles_and_colors
+      */
+      // this.ctx.lineWidth = 2
       if (data) {
-        this.nodeTemplate === [] ? this.calculateCoordinate(data, this.originY) : this.calculateCustomCoordinate(data, this.originY)
-        this._chartWidth -= this.nodeSpacing[0]
-        this._chartHeight += this.nodeHeight
-        this.setCanvasSize(canvas, this.width || (this._chartWidth + this.padding[1]), this.height || (this._chartHeight + this.padding[2]))
-        this.ctx.scale(...this.scale)
+        this.calcNodesPosition(data, this.originY)
+        this.#chartWidth -= this.nodeAttr.spacing[0]
+        this.#chartHeight += this.nodeAttr.height
+        this.setCanvasSize(canvas, this.options.width || (this.#chartWidth + this.options.padding[1]), this.options.height || (this.#chartHeight + this.options.padding[2]))
         this.drawChart(this.ctx, data, false)
-        this.bindClick(canvas, data)
+        canvas.addEventListener('click', this.selectEvent(data).bind(this))
       } else {
         throw new Error('data can\'t be empty.')
       }
@@ -100,68 +99,46 @@ export default class CanvasOrgChart {
     }
   }
 
-  /**
-   * @method 计算坐标
-   * @param {object} current
-   * @param {number} y
-   */
-  calculateCoordinate(current, y) {
-    const length = current.children.length
-    current.y = y
-    if (current.y > this._chartHeight) {
-      this._chartHeight = current.y
+  addEventListener(event, fn) {
+    if (!this.#fns.has(event)) {
+      this.#fns.set(event, [])
     }
-    if (length <= 0) {
-      current.x = this._chartWidth
-      this._chartWidth += this.nodeWidth + this.nodeSpacing[0]
-    } else {
-      y += this.nodeHeight + this.nodeSpacing[1]
-      for (let item of current.children) {
-        this.calculateCoordinate(item, y)
-      }
-      if (length === 1) {
-        current.x = current.children[0].x
-      } else {
-        current.x = Math.round(current.children[0].x + (current.children[length - 1].x - current.children[0].x) / 2)
-      }
-    }
+    this.#fns.get(event).push(fn)
   }
 
   /**
-   * @method 计算自定义节点坐标
+   * @method 赋值节点属性
+   * @param {object} node
+   */
+  setAttribute(node) {
+    if (!node.nodeAttr) node.nodeAttr = {}
+    reverseAssign(node.nodeAttr, this.nodeAttr)
+  }
+
+  /**
+   * @method 计算节点位置
    * @param {object} current
    * @param {number} y
    */
-  calculateCustomCoordinate(current, y) {
-    const length = current.children.length
-    current.y = y
-    if (Array.isArray(this.nodeTemplate) && this.nodeTemplate.length > 0) {
-      for (let [index, custom] of this.nodeTemplate.entries()) {
-        if (custom.checkOwn && Object.prototype.hasOwnProperty.call(current, custom.attributeName) || current[custom.attributeName]) {
-          current._isCustom = index
-          current._width = custom.width
-          current._height = custom.height
-          break
-        }
-      }
+  calcNodesPosition(node, y) {
+    const length = node.children?.length || 0
+    this.setAttribute(node)
+    node.nodeAttr.y = y
+    if (y > this.#chartHeight) {
+      this.#chartHeight = y
     }
-    if (current.y > this._chartHeight) {
-      this._chartHeight = current.y
-    }
-    if (length <= 0) {
-      current.x = this._chartWidth
-      this._chartWidth += (current._width || this.nodeWidth) + this.nodeSpacing[0] 
+    if (length === 0) {
+      node.nodeAttr.x = this.#chartWidth
+      this.#chartWidth += node.nodeAttr.width + node.nodeAttr.spacing[0]
     } else {
-      y += this.nodeHeight + this.nodeSpacing[1]
-      for (let item of current.children) {
-        this.calculateCustomCoordinate(item, y)
+      y += node.nodeAttr.height + this.nodeAttr.spacing[1]
+      for (let item of node.children) {
+        this.calcNodesPosition(item, y)
       }
       if (length === 1) {
-        current.x = current.children[0].x
+        node.nodeAttr.x = node.children[0].x
       } else {
-        // 如果坐标有小数点，渲染时会模糊
-        const offsetX = ((current.children[0]._width || this.nodeWidth) - this.nodeWidth) / 2 - ((current._width || this.nodeWidth) - this.nodeWidth) / 2
-        current.x = Math.round(current.children[0].x + (current.children[length - 1].x - current.children[0].x) / 2 + offsetX)
+        node.nodeAttr.x = Math.round(node.children[0].nodeAttr.x + (node.children[length - 1].nodeAttr.x - node.children[0].nodeAttr.x) / 2)
       }
     }
   }
@@ -169,139 +146,63 @@ export default class CanvasOrgChart {
   /**
    * @method 绘图
    * @param {object} ctx: CanvasRenderingContext2D
-   * @param {object} current
+   * @param {object} node
    */
-  drawChart(ctx, current) {
-    if (typeof(this.nodeTemplate) === 'function') {
-      this.nodeTemplate(this, ctx, current.x, current.y, current)
-    } else if (current._isCustom !== undefined) {
-      this.nodeTemplate[current._isCustom].draw(this, ctx, current.x, current.y, current)
-    } else {
-      this.drawNode(ctx, current.x, current.y, current)
-    }
-    this.drawNodeLine(ctx, current)
+  drawChart(ctx, node) {
+    if (this.options.background) this.drawBackground(ctx)
+    this.drawNode(ctx, node)
   }
 
   /**
-   * @method 绘制节点
+   * @method 绘制背景
    * @param {object} ctx: CanvasRenderingContext2D
-   * @param {number} x: 起始横坐标
-   * @param {number} y: 起始纵坐标
+   */ 
+  drawBackground(ctx) {
+    ctx.save()
+    ctx.fillStyle = this.options.background
+    ctx.fillRect(0, 0, this.options.width || (this.#chartWidth + this.options.padding[1]), this.options.height || (this.#chartHeight + this.options.padding[2]))
+    ctx.restore()
+  }
+
+  /**
+   * @method 绘制节点 
+   * @param {object} ctx: CanvasRenderingContext2D
    * @param {object} node
    */ 
-  drawNode(ctx, x, y, node) {
-    this.drawAvatar(ctx, x, y, node)
-    // node color
-    ctx.fillStyle = this.nodeBackground
-    for (let paint of this.nodeCustomBackgrounds) {
-      if (paint.checkOwn && Object.prototype.hasOwnProperty.call(node, paint.attributeName) || node[paint.attributeName] !== undefined) {
-        typeof(paint.color) === 'string' ? ctx.fillStyle = paint.color : ctx.fillStyle = paint.color[node[paint.attributeName]]
-      }
-    }
-
-    const height = this.nodeHeight - this.nodeWidth
-    ctx.fillRect(x, y + this.nodeWidth, this.nodeWidth, height)
+  drawNode(ctx, node) {
+    const { x, y, width, height, borderColor, background, radii, avatar } = node.nodeAttr
+    ctx.save()
+    ctx.beginPath()
+    // 填充
+    ctx.roundRect(x, y, width, height, radii)
+    ctx.fillStyle = background
+    ctx.fill()
+    // 边框
+    ctx.roundRect(x, y, width, height, radii)
+    ctx.strokeStyle = borderColor
     ctx.stroke()
-    this.drawVerticalText(ctx, x, y + this.nodeWidth, node._width || this.nodeWidth, height, node.name)
-  }
-
-  /**
-   * @method 绘制头像
-   * @param {object} ctx: CanvasRenderingContext2D
-   * @param {number} x: 起始横坐标
-   * @param {number} y: 起始纵坐标
-   * @param {string} avatarUrl: 头像地址
-   */
-  drawAvatar(ctx, x, y, person, width = this.nodeWidth) {
-    // Object.prototype.hasOwnProperty.call(person, 'sex')
-    const img = new Image()
-    const that = this
-    if (person.avatar) {
-      img.src = person.avatar
-    } else if (this.customAvatar && Object.prototype.hasOwnProperty.call(person, this.customAvatar.attributeName)) {
-      img.src = this.customAvatar.avatars[person[this.customAvatar.attributeName]]
-    } else {
-      img.src = this.defaultAvatar
+    ctx.restore()
+    // 头像
+    if (avatar) {
+      this.drawImg(ctx, node)
     }
-    img.onload = function() {
-      ctx.drawImage(this, x, y, width, width)
+    // 名字
+    if (node.name) {
+      this.drawText({
+        ctx,
+        x: node.nodeAttr.x,
+        y: node.nodeAttr.y,
+        nodeWidth: node.nodeAttr.width,
+        text: node.name,
+        textStyle: node.nodeAttr.name
+      })
     }
-    img.onerror = function() {
-      that.drawImageError(ctx, x, y, width, width)
-    }
-  }
-
-  /**
-   * @method 绘制纵向文字
-   * @param {object} ctx: CanvasRenderingContext2D
-   * @param {number} x: 起始横坐标
-   * @param {number} y: 起始纵坐标
-   * @param {string} content: 内容
-   * @param {number} height: 绘制总长度
-   */
-  drawVerticalText(ctx, x, y, width, height, content, margin = 10) {
-    const fontSize = 22
-    let spacing = (height - content.length * fontSize - margin) / (content.length - 1)
-    ctx.font = `${fontSize}px serif`
-    ctx.textBaseline = 'bottom'
-    ctx.fillStyle = this.nodeColor
-    x += (width / 2 - fontSize / 2)
-    y += fontSize + (margin / 2)
-    for (let single of content.split('')) {
-      ctx.fillText(single, x, y)
-      y += fontSize + spacing
-    }
-  }
-
-  /**
-   * @method 绘制连接node的线
-   * @param {object} ctx: CanvasRenderingContext2D
-   * @param {object} node
-   */
-  drawNodeLine(ctx, node) {
-    const length = node.children.length
-    this.drawSelected(ctx, node, node._width || this.nodeWidth, node._height || this.nodeHeight, true)
-    ctx.strokeStyle = 'black'
-    ctx.lineCap = 'butt'
-    const tempX = node.x + (node._width || this.nodeWidth) / 2
-    if (node.y > this.originY) {
-      this.drawLine(ctx, [tempX, node.y - 2], [tempX, node.y - this.nodeSpacing[1] / 2])
-    }
-    if (length > 0) {
-      const tempY = node.y + (node._height || this.nodeHeight)
-      this.drawLine(ctx, [tempX, tempY + 2], [tempX, tempY + this.nodeSpacing[1] / 2 + this.nodeHeight - (node._height || this.nodeHeight)])
-      const y = node.y + this.nodeHeight + this.nodeSpacing[1] / 2 + 1
-      this.drawLine(ctx, [node.children[0].x + (node.children[0]._width || this.nodeWidth) / 2, y], [node.children[length - 1].x + (node.children[length - 1]._width || this.nodeWidth) / 2, y])
-
-      for (let item of node.children) {
-        this.drawChart(ctx, item)
-      }
-    }
-  }
-
-  /**
-   * @method 选中样式
-   * @param {object} ctx: CanvasRenderingContext2D
-   * @param {number} x: 起始横坐标
-   * @param {number} y: 起始纵坐标
-   * @param {number} width: 宽度
-   * @param {number} height: 高度
-   */
-  drawSelected(ctx, node, width, height, isClean = false) {
-    let x = node.x - 1
-    const y = node.y - 1
-    width += 2
-    height += 2
-    ctx.lineCap = 'round'
-    if (isClean) {
-      ctx.strokeStyle = 'white'
-    } else {
-      ctx.strokeStyle = 'black'
-    }
-    this.drawLine(ctx, [x, y], [x + width, y])
-    this.drawLine(ctx, [x + width, y], [x + width, y + height])
-    this.drawLine(ctx, [x + width, y + height], [x, y + height])
-    this.drawLine(ctx, [x, y + height], [x, y])
+    // 描述
+    node.children?.map(node => {
+      this.drawNode(ctx, node)
+    })
+    // 连接线
+    this.drawLinkLine(ctx, node)
   }
 
   /**
@@ -311,12 +212,111 @@ export default class CanvasOrgChart {
    * @param {array} end: 结束坐标
    */
   drawLine(ctx, start, end) {
+    ctx.save()
     ctx.beginPath()
-    // 设置线宽，宽度如果为奇数会导致像素渲染时侵染，reference-link: https://developer.mozilla.org/zh-CN/docs/Web/API/Canvas_API/Tutorial/Applying_styles_and_colors
-    ctx.lineWidth = 2
     ctx.moveTo(...start)
     ctx.lineTo(...end)
     ctx.stroke()
+    ctx.restore()
+  }
+
+  /**
+   * @method 绘制图片
+   * @param {object} ctx: CanvasRenderingContext2D
+   * @param {object} node
+   */
+  drawImg(ctx, node) {
+    const img = new Image()
+    const { offsetX, offsetY, width, height, url, circle } = node.nodeAttr.avatar
+    let { x, y } = node.nodeAttr
+    x += offsetX
+    y += offsetY
+    img.src = url
+    img.onload = function() {
+      ctx.save()
+      if (circle) {
+        const radius = width / 2
+        ctx.beginPath()
+        ctx.arc(x + radius, y + radius, radius, 0, Math.PI * 2)
+        ctx.clip()
+        ctx.closePath()
+
+        ctx.drawImage(this, x, y, width, height)
+
+      } else {
+        ctx.drawImage(this, x, y, width, height)
+      }
+      ctx.restore()
+    }
+    img.onerror = function() {
+      console.error('img loaded fail.')
+    }
+  }
+
+  /**
+   * @method 绘制文字
+   * @param {object} ctx: CanvasRenderingContext2D
+   * @param {string} x
+   * @param {string} y
+   * @param {string} nodeWidth: 节点宽度
+   * @param {string} text: 文本
+   * @param {object} textStyle: 文本样式
+   */
+  drawText({ ctx, x, y, nodeWidth, text, textStyle }) {
+    const { offsetX, offsetY, color, font, textAlign } = textStyle
+    ctx.save()
+    ctx.font = font
+    ctx.fillStyle = color
+    x += offsetX
+    y += offsetY
+    const textWidth = ctx.measureText(text).width
+    switch (textAlign) {
+      case 'center':
+        x += (nodeWidth - textWidth) / 2
+        break;
+      case 'right':
+        x += (nodeWidth - textWidth)
+        break;
+    }
+    ctx.fillText(text, x, y)
+    ctx.restore()
+  }
+
+  /**
+   * @method 绘制连接线
+   * @param {object} ctx: CanvasRenderingContext2D
+   * @param {object} node
+   */
+  drawLinkLine(ctx, node) {
+    const length = node.children.length
+    const lw = ctx.lineWidth
+    ctx.strokeStyle = 'black'
+    ctx.lineCap = 'butt'
+    const tempX = node.nodeAttr.x + (node._width || this.nodeAttr.width) / 2
+
+    if (node.nodeAttr.y > this.originY) {
+      this.drawLine(
+        ctx,
+        [tempX, node.nodeAttr.y - lw],
+        [tempX, node.nodeAttr.y - this.nodeAttr.spacing[1] / 2]
+      )
+    }
+
+    if (length > 0) {
+      const tempY = node.nodeAttr.y + (node.nodeAttr.height)
+      this.drawLine(
+        ctx,
+        [tempX, tempY + lw],
+        [tempX, tempY + this.nodeAttr.spacing[1] / 2 + node.nodeAttr.height - this.nodeAttr.height]
+      )
+
+      const y = node.nodeAttr.y + this.nodeAttr.height + this.nodeAttr.spacing[1] / 2 + lw
+      this.drawLine(
+        ctx,
+        [node.children[0].nodeAttr.x + node.nodeAttr.width / 2, y],
+        [node.children[length - 1].nodeAttr.x + node.nodeAttr.width / 2, y]
+      )
+    }
   }
 
   /**
@@ -331,166 +331,46 @@ export default class CanvasOrgChart {
   }
 
   /**
-   * @method 绑定点击事件
+   * @method 选中事件
    * @param {object} ctx: CanvasRenderingContext2D
    * @param {object} data
    */
-  bindClick(canvas, data) {
-    const that = this
-    canvas.addEventListener('click', function(event) {
-      const rect = this.getBoundingClientRect()
-      const x = (event.clientX - rect.left) / that.scale[0]
-      const y = (event.clientY - rect.top) / that.scale[1]
+  selectEvent(data) {
+    return function(event) {
+      const rect = this.canvas.getBoundingClientRect()
+      const x = (event.clientX - rect.left)
+      const y = (event.clientY - rect.top)
       // 判断点击坐标是否在 tree chart 绘制范围内和是否重复点击
-      if (that.isPointInRect([that.originX, that.originY], that._chartWidth - that.padding[3], that._chartHeight - that.padding[0], x, y)) {
+      if (pointInRect(
+        [this.originX, this.originY],
+        this.#chartWidth - this.options.padding[3],
+        this.#chartHeight - this.options.padding[0],
+        x,
+        y
+      )) {
         // valid range
-        if (that._lastClickNode && that.isPointInRect([that._lastClickNode.x, that._lastClickNode.y], that._lastClickNode._width || that.nodeWidth, that._lastClickNode._height || that.nodeHeight, x, y)) {
-          // console.log('重复点击')
-        } else {
-          that._isFindNode = false
-          that.isClickNode(data, x, y)
-          if (!that._isFindNode) {
-            // 删除 selected 样式
-            if (that._lastClickNode) {
-              that.drawSelected(that.ctx, that._lastClickNode, that._lastClickNode._width || that.nodeWidth, that._lastClickNode._height || that.nodeHeight, true)
-            }
-            that._lastClickNode = null
-          }
-        }
-      } else {
-        // invalid range
-        if (that._lastClickNode) {
-          that.drawSelected(that.ctx, that._lastClickNode, that._lastClickNode._width || that.nodeWidth, that._lastClickNode._height || that.nodeHeight, true)
-        }
-        that._lastClickNode = null
+        const target = this.getSelected([data], x, y) || null
+        this.#fns.get(EVENTS.SELECT).map((fn) => {
+          fn(target)
+        })
       }
-    })
+    }
   }
 
   /**
    * @method 是否点击节点
-   * @param {object} current
+   * @param {object[]} nodeList
    * @param {number} x: 点击时的横坐标
    * @param {number} y: 点击时的纵坐标
    */
-  isClickNode(current, x, y) {
-    if (this.isPointInRect([current.x, current.y], current._width || this.nodeWidth, current._height || this.nodeHeight, x, y)) {
-      if (this._lastClickNode) {
-        this.drawSelected(this.ctx, this._lastClickNode, this._lastClickNode._width || this.nodeWidth, this._lastClickNode._height || this.nodeHeight, true)
-      }
-      this._lastClickNode = current
-      this._isFindNode = true
-      this.drawSelected(this.ctx, current, this._lastClickNode._width || this.nodeWidth, this._lastClickNode._height || this.nodeHeight)
-      return
-    }
-    if (current.children.length > 0 && !this._isFindNode) {
-      for (let node of current.children) {
-        this.isClickNode(node, x, y)
+  getSelected(nodeList, x, y) {
+    for (let node of nodeList) {
+      if (pointInRect([node.nodeAttr.x, node.nodeAttr.y], node._width || this.nodeAttr.width, node._height || this.nodeAttr.height, x, y)) {
+        return node
+      } else if (node.children?.length) {
+        const target = this.getSelected(node.children, x, y)
+        if (target) return target
       }
     }
-  }
-
-  /**
-   * @method 判断某个点是否在长方形中
-   * @param {array} origin: 长方形左上角坐标
-   * @param {number} width: 长方形宽度
-   * @param {number} height: 长方形高度
-   * @param {number} x: 点的横坐标
-   * @param {number} y: 点的纵坐标
-   * @return {boolean}
-   */
-  isPointInRect(origin, width, height, x, y) {
-    const p = {
-      x,
-      y
-    }
-    const a = {
-      x: origin[0],
-      y: origin[1]
-    }
-    const b = {
-      x: origin[0] + width,
-      y: origin[1]
-    } 
-    const c = {
-      x: origin[0] + width,
-      y: origin[1] + height
-    }
-    const d = {
-      x: origin[0],
-      y: origin[1] + height
-    }
-    return this.getCrossProduct(p, a, b) * this.getCrossProduct(p, c, d) >= 0 && this.getCrossProduct(p, b, c) * this.getCrossProduct(p, d, a) >= 0
-  }
-
-  /**
-   * @method 叉乘
-   * @param {object} p
-   * @param {object} p1
-   * @param {object} p2
-   * @return {boolean}
-   */
-  getCrossProduct (p, p1, p2) {
-    return (p2.x - p1.x) * (p.y - p1.y) - (p.x - p1.x) * (p2.y - p1.y)
-  }
-
-  /**
-   * @method 图片错误
-   * @param {object} ctx: CanvasRenderingContext2D
-   * @param {number} x
-   * @param {number} y
-   * @param {number} width
-   * @param {number} height
-   */
-  drawImageError(ctx, x, y, width, height) {
-    const mountainHeigh = height / 2
-    const mountainWidth = width / 5.5
-    const fontSize = width / 4
-    const offsetY = width / 14
-    ctx.beginPath()
-    ctx.fillStyle = 'darkgray'
-    ctx.strokeStyle = 'white'
-    ctx.fillRect(x, y, width, height)
-    ctx.fillStyle = 'white'
-    ctx.font = `${fontSize}px arial`
-    ctx.fillText('暂无', x + fontSize / 3, y + fontSize / 2 * 3)
-    ctx.fillText('图片', x + fontSize / 3, y + fontSize / 2 * 5)
-    ctx.arc(x + width - mountainWidth, y + height / 4, fontSize / 3, 0, Math.PI*2)
-
-    const tempHeight = y + height - mountainHeigh / 2
-    ctx.lineWidth = 2
-    ctx.moveTo(x + 0, y + height)
-    ctx.lineTo(x + mountainWidth, tempHeight)
-    this.drawMountain(ctx, [x + mountainWidth, tempHeight], [x + mountainWidth * 2, tempHeight], offsetY)
-    this.drawMountain(ctx, [x + mountainWidth * 2, tempHeight], [x + mountainWidth * 3 , tempHeight], offsetY, true)
-    ctx.lineTo(x + mountainWidth * 4, y + height - mountainHeigh)
-    this.drawMountain(ctx, [x + mountainWidth * 4, y + height - mountainHeigh], [x + mountainWidth * 5, y + height - mountainHeigh], offsetY)
-    ctx.lineTo(x + width, y + height - mountainHeigh + mountainWidth * .6)
-    ctx.stroke()
-    ctx.closePath()
-  }
-
-  /**
-   * @method 山峰
-   * @param {object} ctx: CanvasRenderingContext2D
-   * @param {array} start
-   * @param {array} end
-   * @param {number} offsetY
-   * @param {boolean} rotate
-   */
-  drawMountain(ctx, start, end, offsetY, rotate = false) {
-    if (rotate) {
-      offsetY *= -1
-    }
-    ctx.moveTo(...start)
-    const cp0 = {
-      x: start[0] + (end[0] - start[0]) / 4,
-      y: start[1] - offsetY
-    }
-    const cp1 = {
-      x: end[0] - (end[0] - start[0]) / 4,
-      y: end[1] - offsetY
-    }
-    ctx.bezierCurveTo(cp0.x, cp0.y, cp1.x, cp1.y, ...end)
   }
 }
