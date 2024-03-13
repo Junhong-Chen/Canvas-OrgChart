@@ -57,8 +57,11 @@ function reverseAssign(target) {
     const source = arguments[i]
     if (source != null) {
       for (let key in source) {
-        if (!Object.prototype.hasOwnProperty.call(from, key))
-        from[key] = source[key]
+        if (!Object.prototype.hasOwnProperty.call(from, key)) {
+          from[key] = source[key]
+        } else if (source[key].constructor === Object && from[key]) {
+          reverseAssign(from[key], source[key])
+        }
       }
     }
   }

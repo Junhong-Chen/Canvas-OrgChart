@@ -189,7 +189,11 @@ function reverseAssign(target) {
     var source = arguments[i];
     if (source != null) {
       for (var key in source) {
-        if (!Object.prototype.hasOwnProperty.call(from, key)) from[key] = source[key];
+        if (!Object.prototype.hasOwnProperty.call(from, key)) {
+          from[key] = source[key];
+        } else if (source[key].constructor === Object && from[key]) {
+          reverseAssign(from[key], source[key]);
+        }
       }
     }
   }
@@ -202,6 +206,7 @@ var EVENTS = {
 var _fns = /*#__PURE__*/new WeakMap();
 var _chartWidth = /*#__PURE__*/new WeakMap();
 var _chartHeight = /*#__PURE__*/new WeakMap();
+var _lastedSpacing = /*#__PURE__*/new WeakMap();
 var CanvasOrgChart = /*#__PURE__*/function () {
   function CanvasOrgChart(canvas) {
     var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {
@@ -211,6 +216,7 @@ var CanvasOrgChart = /*#__PURE__*/function () {
     _classPrivateFieldInitSpec(this, _fns, new Map());
     _classPrivateFieldInitSpec(this, _chartWidth, 0);
     _classPrivateFieldInitSpec(this, _chartHeight, 0);
+    _classPrivateFieldInitSpec(this, _lastedSpacing, 0);
     this.canvas = canvas;
     this.nodeAttr = {};
     this.options = {};
@@ -222,6 +228,8 @@ var CanvasOrgChart = /*#__PURE__*/function () {
     this.options.padding = _options$padding === void 0 ? [0, 0, 0, 0] : _options$padding;
     var _options$background = options.background;
     this.options.background = _options$background === void 0 ? '' : _options$background;
+    var _options$lineColor = options.lineColor;
+    this.options.lineColor = _options$lineColor === void 0 ? 'black' : _options$lineColor;
     var _ref = options.node || {};
     var _ref$width = _ref.width;
     this.nodeAttr.width = _ref$width === void 0 ? 0 : _ref$width;
@@ -231,18 +239,16 @@ var CanvasOrgChart = /*#__PURE__*/function () {
     this.nodeAttr.spacing = _ref$spacing === void 0 ? [20, 20] : _ref$spacing;
     var _ref$radii = _ref.radii;
     this.nodeAttr.radii = _ref$radii === void 0 ? 8 : _ref$radii;
-    var _ref$color = _ref.color;
-    this.nodeAttr.color = _ref$color === void 0 ? 'white' : _ref$color;
+    var _ref$background = _ref.background;
+    this.nodeAttr.background = _ref$background === void 0 ? 'white' : _ref$background;
     var _ref$borderColor = _ref.borderColor;
     this.nodeAttr.borderColor = _ref$borderColor === void 0 ? 'black' : _ref$borderColor;
-    var _ref$background = _ref.background;
-    this.nodeAttr.background = _ref$background === void 0 ? 'cornflowerblue' : _ref$background;
     var _ref$avatar = _ref.avatar;
     this.nodeAttr.avatar = _ref$avatar === void 0 ? null : _ref$avatar;
     var _ref$name = _ref.name;
     this.nodeAttr.name = _ref$name === void 0 ? null : _ref$name;
-    var _ref$desc = _ref.desc;
-    this.nodeAttr.desc = _ref$desc === void 0 ? null : _ref$desc;
+    var _ref$descs = _ref.descs;
+    this.nodeAttr.descs = _ref$descs === void 0 ? null : _ref$descs;
     this.formatParams();
     this.originX = this.options.padding[3];
     this.originY = this.options.padding[0];
@@ -290,6 +296,11 @@ var CanvasOrgChart = /*#__PURE__*/function () {
         this.nodeAttr.spacing[1] = this.nodeAttr.spacing[0];
       }
     }
+
+    /**
+     * @method 渲染组织结构图
+     * @param {object} data 数据
+     */
   }, {
     key: "render",
     value: function render(data) {
@@ -301,12 +312,12 @@ var CanvasOrgChart = /*#__PURE__*/function () {
         */
         // this.ctx.lineWidth = 2
         if (data) {
-          this.calcNodesPosition(data, this.originY);
-          _classPrivateFieldSet2(_chartWidth, this, _classPrivateFieldGet2(_chartWidth, this) - this.nodeAttr.spacing[0]);
-          _classPrivateFieldSet2(_chartHeight, this, _classPrivateFieldGet2(_chartHeight, this) + this.nodeAttr.height);
+          var _data = JSON.parse(JSON.stringify(data));
+          this.calcNodesPosition(_data, this.originY);
+          _classPrivateFieldSet2(_chartWidth, this, _classPrivateFieldGet2(_chartWidth, this) - _classPrivateFieldGet2(_lastedSpacing, this));
           this.setCanvasSize(canvas, this.options.width || _classPrivateFieldGet2(_chartWidth, this) + this.options.padding[1], this.options.height || _classPrivateFieldGet2(_chartHeight, this) + this.options.padding[2]);
-          this.drawChart(this.ctx, data, false);
-          canvas.addEventListener('click', this.selectEvent(data).bind(this));
+          this.drawChart(this.ctx, _data, false);
+          canvas.addEventListener('click', this.selectEvent(_data).bind(this));
         } else {
           throw new Error('data can\'t be empty.');
         }
@@ -314,13 +325,19 @@ var CanvasOrgChart = /*#__PURE__*/function () {
         throw new Error('can\'t get canvas context.');
       }
     }
+
+    /**
+     * @method 事件监听
+     * @param {string} event 事件名
+     * @param {function} cb 回调函数
+     */
   }, {
     key: "addEventListener",
-    value: function addEventListener(event, fn) {
+    value: function addEventListener(event, cb) {
       if (!_classPrivateFieldGet2(_fns, this).has(event)) {
         _classPrivateFieldGet2(_fns, this).set(event, []);
       }
-      _classPrivateFieldGet2(_fns, this).get(event).push(fn);
+      _classPrivateFieldGet2(_fns, this).get(event).push(cb);
     }
 
     /**
@@ -345,15 +362,20 @@ var CanvasOrgChart = /*#__PURE__*/function () {
       var _node$children;
       var length = ((_node$children = node.children) === null || _node$children === void 0 ? void 0 : _node$children.length) || 0;
       this.setAttribute(node);
+      var _node$nodeAttr = node.nodeAttr,
+        width = _node$nodeAttr.width,
+        height = _node$nodeAttr.height,
+        spacing = _node$nodeAttr.spacing;
       node.nodeAttr.y = y;
-      if (y > _classPrivateFieldGet2(_chartHeight, this)) {
-        _classPrivateFieldSet2(_chartHeight, this, y);
+      if (y + height > _classPrivateFieldGet2(_chartHeight, this)) {
+        _classPrivateFieldSet2(_chartHeight, this, y + height);
       }
       if (length === 0) {
         node.nodeAttr.x = _classPrivateFieldGet2(_chartWidth, this);
-        _classPrivateFieldSet2(_chartWidth, this, _classPrivateFieldGet2(_chartWidth, this) + (node.nodeAttr.width + node.nodeAttr.spacing[0]));
+        _classPrivateFieldSet2(_chartWidth, this, _classPrivateFieldGet2(_chartWidth, this) + (width + spacing[0]));
+        _classPrivateFieldSet2(_lastedSpacing, this, spacing[0]);
       } else {
-        y += node.nodeAttr.height + this.nodeAttr.spacing[1];
+        y += height + spacing[1];
         var _iterator = _createForOfIteratorHelper(node.children),
           _step;
         try {
@@ -407,17 +429,20 @@ var CanvasOrgChart = /*#__PURE__*/function () {
   }, {
     key: "drawNode",
     value: function drawNode(ctx, node) {
-      var _node$children2,
-        _this = this;
-      var _node$nodeAttr = node.nodeAttr,
-        x = _node$nodeAttr.x,
-        y = _node$nodeAttr.y,
-        width = _node$nodeAttr.width,
-        height = _node$nodeAttr.height,
-        borderColor = _node$nodeAttr.borderColor,
-        background = _node$nodeAttr.background,
-        radii = _node$nodeAttr.radii,
-        avatar = _node$nodeAttr.avatar;
+      var _node$descs,
+        _this = this,
+        _node$children2;
+      var _node$nodeAttr2 = node.nodeAttr,
+        x = _node$nodeAttr2.x,
+        y = _node$nodeAttr2.y,
+        width = _node$nodeAttr2.width,
+        height = _node$nodeAttr2.height,
+        borderColor = _node$nodeAttr2.borderColor,
+        background = _node$nodeAttr2.background,
+        radii = _node$nodeAttr2.radii,
+        avatar = _node$nodeAttr2.avatar,
+        descs = _node$nodeAttr2.descs,
+        name = _node$nodeAttr2.name;
       ctx.save();
       ctx.beginPath();
       // 填充
@@ -437,19 +462,47 @@ var CanvasOrgChart = /*#__PURE__*/function () {
       if (node.name) {
         this.drawText({
           ctx: ctx,
-          x: node.nodeAttr.x,
-          y: node.nodeAttr.y,
-          nodeWidth: node.nodeAttr.width,
+          x: x,
+          y: y,
+          nodeWidth: width,
           text: node.name,
-          textStyle: node.nodeAttr.name
+          textStyle: name
         });
       }
       // 描述
+      if ((_node$descs = node.descs) !== null && _node$descs !== void 0 && _node$descs.length) {
+        var _descs$height = descs.height,
+          dHeight = _descs$height === void 0 ? 0 : _descs$height,
+          dBackground = descs.background,
+          _descs$offset = descs.offset,
+          offset = _descs$offset === void 0 ? [] : _descs$offset;
+        var lw = ctx.lineWidth;
+        ctx.save();
+        ctx.beginPath();
+        ctx.strokeStyle = borderColor;
+        this.drawLine(ctx, [x, y + height - dHeight], [x + width, y + height - dHeight]);
+        ctx.roundRect(x + 1, y + height - dHeight + lw, width - lw * 2, dHeight - lw * 2, [0, 0, radii, radii]);
+        ctx.fillStyle = dBackground;
+        ctx.fill();
+        ctx.restore();
+        node.descs.map(function (desc, i) {
+          var textStyle = Object.assign(descs, offset[i]);
+          _this.drawText({
+            ctx: ctx,
+            x: x,
+            y: y,
+            nodeWidth: width,
+            text: desc,
+            textStyle: textStyle
+          });
+        });
+      }
+      // 连接线
+      this.drawLinkLine(ctx, node);
+      // 遍历子节点
       (_node$children2 = node.children) === null || _node$children2 === void 0 || _node$children2.map(function (node) {
         _this.drawNode(ctx, node);
       });
-      // 连接线
-      this.drawLinkLine(ctx, node);
     }
 
     /**
@@ -479,15 +532,21 @@ var CanvasOrgChart = /*#__PURE__*/function () {
     value: function drawImg(ctx, node) {
       var img = new Image();
       var _node$nodeAttr$avatar = node.nodeAttr.avatar,
-        offsetX = _node$nodeAttr$avatar.offsetX,
-        offsetY = _node$nodeAttr$avatar.offsetY,
-        width = _node$nodeAttr$avatar.width,
-        height = _node$nodeAttr$avatar.height,
-        url = _node$nodeAttr$avatar.url,
-        circle = _node$nodeAttr$avatar.circle;
-      var _node$nodeAttr2 = node.nodeAttr,
-        x = _node$nodeAttr2.x,
-        y = _node$nodeAttr2.y;
+        _node$nodeAttr$avatar2 = _node$nodeAttr$avatar.url,
+        url = _node$nodeAttr$avatar2 === void 0 ? '' : _node$nodeAttr$avatar2,
+        _node$nodeAttr$avatar3 = _node$nodeAttr$avatar.offsetX,
+        offsetX = _node$nodeAttr$avatar3 === void 0 ? 0 : _node$nodeAttr$avatar3,
+        _node$nodeAttr$avatar4 = _node$nodeAttr$avatar.offsetY,
+        offsetY = _node$nodeAttr$avatar4 === void 0 ? 0 : _node$nodeAttr$avatar4,
+        _node$nodeAttr$avatar5 = _node$nodeAttr$avatar.width,
+        width = _node$nodeAttr$avatar5 === void 0 ? 0 : _node$nodeAttr$avatar5,
+        _node$nodeAttr$avatar6 = _node$nodeAttr$avatar.height,
+        height = _node$nodeAttr$avatar6 === void 0 ? 0 : _node$nodeAttr$avatar6,
+        _node$nodeAttr$avatar7 = _node$nodeAttr$avatar.circle,
+        circle = _node$nodeAttr$avatar7 === void 0 ? false : _node$nodeAttr$avatar7;
+      var _node$nodeAttr3 = node.nodeAttr,
+        x = _node$nodeAttr3.x,
+        y = _node$nodeAttr3.y;
       x += offsetX;
       y += offsetY;
       img.src = url;
@@ -528,11 +587,15 @@ var CanvasOrgChart = /*#__PURE__*/function () {
         nodeWidth = _ref2.nodeWidth,
         text = _ref2.text,
         textStyle = _ref2.textStyle;
-      var offsetX = textStyle.offsetX,
-        offsetY = textStyle.offsetY,
-        color = textStyle.color,
+      var _textStyle$offsetX = textStyle.offsetX,
+        offsetX = _textStyle$offsetX === void 0 ? 0 : _textStyle$offsetX,
+        _textStyle$offsetY = textStyle.offsetY,
+        offsetY = _textStyle$offsetY === void 0 ? 0 : _textStyle$offsetY,
+        _textStyle$color = textStyle.color,
+        color = _textStyle$color === void 0 ? 'black' : _textStyle$color,
         font = textStyle.font,
-        textAlign = textStyle.textAlign;
+        _textStyle$textAlign = textStyle.textAlign,
+        textAlign = _textStyle$textAlign === void 0 ? 'center' : _textStyle$textAlign;
       ctx.save();
       ctx.font = font;
       ctx.fillStyle = color;
@@ -561,17 +624,23 @@ var CanvasOrgChart = /*#__PURE__*/function () {
     value: function drawLinkLine(ctx, node) {
       var length = node.children.length;
       var lw = ctx.lineWidth;
-      ctx.strokeStyle = 'black';
-      ctx.lineCap = 'butt';
-      var tempX = node.nodeAttr.x + (node._width || this.nodeAttr.width) / 2;
-      if (node.nodeAttr.y > this.originY) {
-        this.drawLine(ctx, [tempX, node.nodeAttr.y - lw], [tempX, node.nodeAttr.y - this.nodeAttr.spacing[1] / 2]);
+      var _node$nodeAttr4 = node.nodeAttr,
+        x = _node$nodeAttr4.x,
+        y = _node$nodeAttr4.y,
+        width = _node$nodeAttr4.width,
+        height = _node$nodeAttr4.height,
+        lineColor = _node$nodeAttr4.lineColor,
+        spacing = _node$nodeAttr4.spacing;
+      ctx.strokeStyle = lineColor;
+      var tempX = x + width / 2;
+      if (y > this.originY) {
+        this.drawLine(ctx, [tempX, y - lw], [tempX, y - spacing[1] / 2]);
       }
       if (length > 0) {
-        var tempY = node.nodeAttr.y + node.nodeAttr.height;
-        this.drawLine(ctx, [tempX, tempY + lw], [tempX, tempY + this.nodeAttr.spacing[1] / 2 + node.nodeAttr.height - this.nodeAttr.height]);
-        var y = node.nodeAttr.y + this.nodeAttr.height + this.nodeAttr.spacing[1] / 2 + lw;
-        this.drawLine(ctx, [node.children[0].nodeAttr.x + node.nodeAttr.width / 2, y], [node.children[length - 1].nodeAttr.x + node.nodeAttr.width / 2, y]);
+        var tempY = y + height;
+        this.drawLine(ctx, [tempX, tempY + lw], [tempX, tempY + spacing[1] / 2 + height - height]);
+        var _y = y + height + spacing[1] / 2 + lw;
+        this.drawLine(ctx, [node.children[0].nodeAttr.x + width / 2, _y], [node.children[length - 1].nodeAttr.x + width / 2, _y]);
       }
     }
 
@@ -626,7 +695,12 @@ var CanvasOrgChart = /*#__PURE__*/function () {
         for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
           var _node$children3;
           var node = _step2.value;
-          if (pointInRect([node.nodeAttr.x, node.nodeAttr.y], node._width || this.nodeAttr.width, node._height || this.nodeAttr.height, x, y)) {
+          var _node$nodeAttr5 = node.nodeAttr,
+            nX = _node$nodeAttr5.x,
+            nY = _node$nodeAttr5.y,
+            width = _node$nodeAttr5.width,
+            height = _node$nodeAttr5.height;
+          if (pointInRect([nX, nY], width, height, x, y)) {
             return node;
           } else if ((_node$children3 = node.children) !== null && _node$children3 !== void 0 && _node$children3.length) {
             var target = this.getSelected(node.children, x, y);

@@ -8,6 +8,7 @@ export default class CanvasOrgChart {
   #fns = new Map()
   #chartWidth = 0
   #chartHeight = 0
+  #lastedSpacing = 0
   constructor(canvas, options = { node: {} }) {
     this.canvas = canvas
     this.nodeAttr = {}
@@ -17,18 +18,18 @@ export default class CanvasOrgChart {
       height: this.options.height = 0,
       padding: this.options.padding = [0, 0, 0, 0],
       background: this.options.background = '',
+      lineColor: this.options.lineColor = 'black'
     } = options);
     ({
       width: this.nodeAttr.width = 0,
       height: this.nodeAttr.height = 0,
       spacing: this.nodeAttr.spacing = [20, 20],
       radii: this.nodeAttr.radii = 8,
-      color: this.nodeAttr.color = 'white',
+      background: this.nodeAttr.background = 'white',
       borderColor: this.nodeAttr.borderColor = 'black',
-      background: this.nodeAttr.background = 'cornflowerblue',
       avatar: this.nodeAttr.avatar = null,
       name: this.nodeAttr.name = null,
-      desc: this.nodeAttr.desc = null
+      descs: this.nodeAttr.descs = null,
     } = options.node || {})
     this.formatParams()
     this.originX = this.options.padding[3]
@@ -76,6 +77,10 @@ export default class CanvasOrgChart {
     }
   }
 
+  /**
+   * @method 渲染组织结构图
+   * @param {object} data 数据
+   */
   render(data) {
     const canvas = this.canvas
     if (canvas.getContext) {
@@ -85,12 +90,12 @@ export default class CanvasOrgChart {
       */
       // this.ctx.lineWidth = 2
       if (data) {
-        this.calcNodesPosition(data, this.originY)
-        this.#chartWidth -= this.nodeAttr.spacing[0]
-        this.#chartHeight += this.nodeAttr.height
+        const _data = JSON.parse(JSON.stringify(data)) 
+        this.calcNodesPosition(_data, this.originY)
+        this.#chartWidth -= this.#lastedSpacing
         this.setCanvasSize(canvas, this.options.width || (this.#chartWidth + this.options.padding[1]), this.options.height || (this.#chartHeight + this.options.padding[2]))
-        this.drawChart(this.ctx, data, false)
-        canvas.addEventListener('click', this.selectEvent(data).bind(this))
+        this.drawChart(this.ctx, _data, false)
+        canvas.addEventListener('click', this.selectEvent(_data).bind(this))
       } else {
         throw new Error('data can\'t be empty.')
       }
@@ -99,11 +104,16 @@ export default class CanvasOrgChart {
     }
   }
 
-  addEventListener(event, fn) {
+  /**
+   * @method 事件监听
+   * @param {string} event 事件名
+   * @param {function} cb 回调函数
+   */
+  addEventListener(event, cb) {
     if (!this.#fns.has(event)) {
       this.#fns.set(event, [])
     }
-    this.#fns.get(event).push(fn)
+    this.#fns.get(event).push(cb)
   }
 
   /**
@@ -123,15 +133,17 @@ export default class CanvasOrgChart {
   calcNodesPosition(node, y) {
     const length = node.children?.length || 0
     this.setAttribute(node)
+    const { width, height, spacing } = node.nodeAttr
     node.nodeAttr.y = y
-    if (y > this.#chartHeight) {
-      this.#chartHeight = y
+    if ((y + height) > this.#chartHeight) {
+      this.#chartHeight = y + height
     }
     if (length === 0) {
       node.nodeAttr.x = this.#chartWidth
-      this.#chartWidth += node.nodeAttr.width + node.nodeAttr.spacing[0]
+      this.#chartWidth += width + spacing[0]
+      this.#lastedSpacing = spacing[0]
     } else {
-      y += node.nodeAttr.height + this.nodeAttr.spacing[1]
+      y += height + spacing[1]
       for (let item of node.children) {
         this.calcNodesPosition(item, y)
       }
@@ -170,7 +182,7 @@ export default class CanvasOrgChart {
    * @param {object} node
    */ 
   drawNode(ctx, node) {
-    const { x, y, width, height, borderColor, background, radii, avatar } = node.nodeAttr
+    const { x, y, width, height, borderColor, background, radii, avatar, descs, name } = node.nodeAttr
     ctx.save()
     ctx.beginPath()
     // 填充
@@ -190,19 +202,53 @@ export default class CanvasOrgChart {
     if (node.name) {
       this.drawText({
         ctx,
-        x: node.nodeAttr.x,
-        y: node.nodeAttr.y,
-        nodeWidth: node.nodeAttr.width,
+        x,
+        y,
+        nodeWidth: width,
         text: node.name,
-        textStyle: node.nodeAttr.name
+        textStyle: name
       })
     }
     // 描述
+    if (node.descs?.length) {
+      const { height: dHeight = 0, background: dBackground, offset = [] } = descs
+      const lw = ctx.lineWidth
+      ctx.save()
+      ctx.beginPath()
+      ctx.strokeStyle = borderColor
+      this.drawLine(
+        ctx,
+        [x, y + height - dHeight],
+        [x + width, y + height - dHeight]
+      )
+      ctx.roundRect(
+        x + 1,
+        y + height - dHeight + lw,
+        width - lw * 2,
+        dHeight - lw * 2,
+        [0, 0, radii, radii]
+      )
+      ctx.fillStyle = dBackground
+      ctx.fill()
+      ctx.restore()
+      node.descs.map((desc, i) => {
+        const textStyle = Object.assign(descs, offset[i])
+        this.drawText({
+          ctx,
+          x,
+          y,
+          nodeWidth: width,
+          text: desc,
+          textStyle
+        })
+      })
+    }
+    // 连接线
+    this.drawLinkLine(ctx, node)
+    // 遍历子节点
     node.children?.map(node => {
       this.drawNode(ctx, node)
     })
-    // 连接线
-    this.drawLinkLine(ctx, node)
   }
 
   /**
@@ -227,7 +273,7 @@ export default class CanvasOrgChart {
    */
   drawImg(ctx, node) {
     const img = new Image()
-    const { offsetX, offsetY, width, height, url, circle } = node.nodeAttr.avatar
+    const { url = '', offsetX = 0, offsetY = 0, width = 0, height = 0, circle = false } = node.nodeAttr.avatar
     let { x, y } = node.nodeAttr
     x += offsetX
     y += offsetY
@@ -263,7 +309,7 @@ export default class CanvasOrgChart {
    * @param {object} textStyle: 文本样式
    */
   drawText({ ctx, x, y, nodeWidth, text, textStyle }) {
-    const { offsetX, offsetY, color, font, textAlign } = textStyle
+    const { offsetX = 0, offsetY = 0, color = 'black', font, textAlign = 'center' } = textStyle
     ctx.save()
     ctx.font = font
     ctx.fillStyle = color
@@ -290,31 +336,31 @@ export default class CanvasOrgChart {
   drawLinkLine(ctx, node) {
     const length = node.children.length
     const lw = ctx.lineWidth
-    ctx.strokeStyle = 'black'
-    ctx.lineCap = 'butt'
-    const tempX = node.nodeAttr.x + (node._width || this.nodeAttr.width) / 2
+    const { x, y, width, height, lineColor, spacing } = node.nodeAttr
+    ctx.strokeStyle = lineColor
+    const tempX = x + width / 2
 
-    if (node.nodeAttr.y > this.originY) {
+    if (y > this.originY) {
       this.drawLine(
         ctx,
-        [tempX, node.nodeAttr.y - lw],
-        [tempX, node.nodeAttr.y - this.nodeAttr.spacing[1] / 2]
+        [tempX, y - lw],
+        [tempX, y - spacing[1] / 2]
       )
     }
 
     if (length > 0) {
-      const tempY = node.nodeAttr.y + (node.nodeAttr.height)
+      const tempY = y + height
       this.drawLine(
         ctx,
         [tempX, tempY + lw],
-        [tempX, tempY + this.nodeAttr.spacing[1] / 2 + node.nodeAttr.height - this.nodeAttr.height]
+        [tempX, tempY + spacing[1] / 2 + height - height]
       )
 
-      const y = node.nodeAttr.y + this.nodeAttr.height + this.nodeAttr.spacing[1] / 2 + lw
+      const _y = y + height + spacing[1] / 2 + lw
       this.drawLine(
         ctx,
-        [node.children[0].nodeAttr.x + node.nodeAttr.width / 2, y],
-        [node.children[length - 1].nodeAttr.x + node.nodeAttr.width / 2, y]
+        [node.children[0].nodeAttr.x + width / 2, _y],
+        [node.children[length - 1].nodeAttr.x + width / 2, _y]
       )
     }
   }
@@ -365,7 +411,8 @@ export default class CanvasOrgChart {
    */
   getSelected(nodeList, x, y) {
     for (let node of nodeList) {
-      if (pointInRect([node.nodeAttr.x, node.nodeAttr.y], node._width || this.nodeAttr.width, node._height || this.nodeAttr.height, x, y)) {
+      const { x: nX, y: nY, width, height } = node.nodeAttr
+      if (pointInRect([nX, nY], width, height, x, y)) {
         return node
       } else if (node.children?.length) {
         const target = this.getSelected(node.children, x, y)

@@ -1,152 +1,147 @@
 export default {
-  name: '父亲',
+  name: 'San Zhang',
   avatar: '',
-  generation: 1,
+  level: 1,
   sex: 0,
+  descs: [
+    '想象力有限公司',
+    '董事长',
+  ],
+  nodeAttr: {
+    height: 130
+  },
   children: [
     {
-      name: '哥哥',
+      name: '张敏',
       avatar: '',
-      generation: 2,
-      sex: 0,
-      children: [
-        {
-          name: '侄子',
-          avatar: '',
-          generation: 3,
-          sex: 0,
-          spouse: {
-            name: '侄媳',
-            avatar: '',
-            sex: 1,
-          },
-          children: []
-        },
-        {
-          name: '侄女',
-          avatar: '',
-          generation: 3,
-          sex: 1,
-          children: []
-        }
-      ]
-    },
-    {
-      name: '姐姐',
-      avatar: '',
-      generation: 2,
+      level: 2,
       sex: 1,
+      descs: [
+        '审计部',
+        '经理',
+      ],
+      nodeAttr: {
+        height: 130
+      },
       children: [
         {
-          name: '外甥',
+          name: '包龙星',
           avatar: '',
-          generation: 3,
+          level: 3,
           sex: 0,
           children: []
         },
         {
-          name: '外甥女',
+          name: '王静',
           avatar: '',
-          generation: 3,
+          level: 3,
           sex: 1,
           children: []
         }
       ]
     },
     {
-      name: '自己',
+      name: '李伟',
       avatar: '',
-      generation: 2,
+      level: 2,
       sex: 0,
-      self: true,
+      descs: [
+        '营销部',
+        '经理',
+      ],
+      nodeAttr: {
+        height: 130
+      },
       children: [
         {
-          name: '儿子',
+          name: '陆小凤',
           avatar: '',
-          generation: 3,
+          level: 3,
           sex: 0,
-          spouse: {
-            name: '儿媳',
-            avatar: '',
-            sex: 1,
-          },
-          mySon: true,
-          children: [
-            {
-              name: '孙子',
-              avatar: '',
-              generation: 4,
-              sex: 0,
-              children: [
-                {
-                  name: '曾孙',
-                  avatar: '',
-                  generation: 5,
-                  sex: 0,
-                  spouse: {
-                    name: '曾孙媳',
-                    avatar: '',
-                    sex: 1,
-                  },
-                  children: []
-                },
-                {
-                  name: '曾孙女',
-                  avatar: '',
-                  generation: 5,
-                  sex: 1,
-                  spouse: {
-                    name: '曾孙女婿',
-                    avatar: '',
-                    sex: 0,
-                  },
-                  children: []
-                }
-              ]
-            },
-            
-            {
-              name: '孙女',
-              avatar: '',
-              generation: 4,
-              sex: 1,
-              children: [
-                {
-                  name: '外曾孙',
-                  avatar: '',
-                  generation: 5,
-                  sex: 0,
-                  children: []
-                },
-                {
-                  name: '外曾孙女',
-                  avatar: '',
-                  generation: 5,
-                  sex: 1,
-                  children: []
-                }
-              ]
-            }
-          ]
+          children: []
         },
         {
-          name: '女儿',
+          name: '卢小芳',
           avatar: '',
-          generation: 3,
+          level: 3,
           sex: 1,
-          xxx: '',
+          children: []
+        }
+      ]
+    },
+    {
+      name: 'Sam',
+      avatar: '',
+      level: 2,
+      sex: 0,
+      descs: [
+        '研发部',
+        '经理'
+      ],
+      nodeAttr: {
+        height: 130
+      },
+      children: [
+        {
+          name: 'Jay',
+          avatar: '',
+          level: 3,
+          sex: 0,
+          descs: [
+            '技术部',
+            '主管'
+          ],
+          nodeAttr: {
+            height: 130
+          },
           children: [
             {
-              name: '外孙',
+              name: '后端仔',
               avatar: '',
-              generation: 4,
+              level: 4,
               sex: 0,
               children: []
             },
             {
-              name: '外孙女',
+              name: '前端仔',
               avatar: '',
-              generation: 4,
+              level: 4,
+              sex: 1,
+              children: []
+            },
+            {
+              name: '摸鱼的',
+              avatar: '',
+              level: 4,
+              sex: 1,
+              children: []
+            }
+          ]
+        },
+        {
+          name: 'Amily',
+          avatar: '',
+          level: 3,
+          sex: 1,
+          descs: [
+            '网络部',
+            '主管'
+          ],
+          nodeAttr: {
+            height: 130
+          },
+          children: [
+            {
+              name: '发电脑的',
+              avatar: '',
+              level: 4,
+              sex: 0,
+              children: []
+            },
+            {
+              name: '交网费的',
+              avatar: '',
+              level: 4,
               sex: 1,
               children: []
             }
@@ -155,22 +150,29 @@ export default {
       ]
     },
     {
-      name: '妹妹',
+      name: 'Lisa',
       avatar: '',
-      generation: 2,
+      level: 2,
       sex: 1,
+      descs: [
+        '测试部',
+        '经理'
+      ],
+      nodeAttr: {
+        height: 130
+      },
       children: [
         {
-          name: '外甥',
+          name: '吴西思',
           avatar: '',
-          generation: 3,
+          level: 3,
           sex: 0,
           children: []
         },
         {
-          name: '外甥女',
+          name: '宥西施',
           avatar: '',
-          generation: 3,
+          level: 3,
           sex: 1,
           children: []
         }

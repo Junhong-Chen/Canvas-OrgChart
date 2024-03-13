@@ -1,8 +1,8 @@
 # Canvas-OrgChart
-Draw orgchart/genealogychart with canvas.
+使用 canvas 绘制组织结构图.
 
 ## Installation
-Of course, you can directly use the standalone build by including canvas-orgchart.js in your webapps.
+<!-- Of course, you can directly use the standalone build by including canvas-orgchart.js in your webapps. -->
 
 ### Install with npm
 ```
@@ -28,16 +28,15 @@ canvasOrgChart.render(data)
 ### Structure of Datasource
 ```js
 {
-  name: 'father', // necessary.
-  avatar: '',
+  name: 'self', // necessary.
   sex: 0,
   children: [ // necessary and must be an array.
     {
-      name: 'self',
-      avatar: '',
+      name: 'son',
       sex: 0,
       children: []
     }
+    ...
   ]
 }
 ```
@@ -45,112 +44,96 @@ canvasOrgChart.render(data)
 ### Options
 |       Name      |       Type      |    Default    |                    Description                   |
 | --------------- | --------------- | ------------- | ------------------------------------------------ |
-| width           | number          | auto          | Canvas width.                                    |
-| height          | number          | auto          | Canvas height.                                   |
-| scale           | array           | [1, 1]        | Scales the canvas units by x horizontally and by y vertically. |
-| originX         | number          | 0             | Draw chart x starting coordinates.               |
-| originY         | number          | 0             | Draw chart y starting coordinates.               |
-| padding         | array           | [0, 0, 0, 0]  | The chart padding as css padding.                |
-| node            | object          |               | Style of the node.                               |
-| node.width      | number          | 60            | Node width.                                      |
-| node.height     | number          | 160           | Node height.                                     |
-| node.spacing    | array           | [20, 20]      | Node spacing.                                    |
-| node.color      | string          | white         | Node color.                                      |
-| node.background | string          | cornflowerblue| Node background.                                 |
-| node.customBackgrounds | array    | []            | Customize backgrounds based on property values.  |
-| node.defaultAvatar | string       | ''            | Node avatar.                                     |
-| node.customAvatar  | object       | null          | Customize avatar based on property values.       |
-| node.nodeTemplate  | array or function | []       | Custom node template.Global replacement if it's a function. |
+| width           | number          | 0             | Canvas 宽度，填 0 时自动计算宽度。                 |
+| height          | number          | 0             | Canvas 高度，填 0 时自动计算高度。                 |
+| padding         | array           | [0, 0, 0, 0]  | Canvas 内边距，和 CSS padding 类似。              |
+| background      | string          | transparent   | Canvas 背景颜色。                                 |
+| lineColor       | string          | black         | 组织结构图中连接线的颜色。                          |
+| node            | object          |               | 节点样式。                                        |
+| node.width      | number          | 0             | 节点宽度。                                        |
+| node.height     | number          | 0             | 节点高度。                                        |
+| node.spacing    | array           | [20, 20]      | 节点与节点间的距离。                               |
+| node.radii      | number          | 8             | 节点边角的弧度半径。                               |
+| node.background | string          | white         | 节点背景颜色。                                    |
+| node.borderColor| string          | black         | 节点边框颜色。                                    |
+| node.avatar     | object | null   | null          | 节点头像样式。                                    |
+| node.avatar.url | string          |               | 节点头像图片 url 地址。                           |
+| node.avatar.offsetX  | number     | 0             | 头像在水平方向上的偏移量。                         |
+| node.avatar.offsetY  | number     | 0             | 头像在垂直方向上的偏移量。                         |
+| node.avatar.width | number        | 0             | 头像宽度。                                        |
+| node.avatar.height| number        | 0             | 头像高度。                                        |
+| node.avatar.circle| boolean       | false         | 是否为圆框头像。                                  |
+| node.name       | object | null   | null          | 节点名字样式。                                    |
+| node.name.offsetX | number        | 0             | 文字在水平方向上的偏移量。                         |
+| node.name.offsetY | number        | 0             | 文字在垂直方向上的偏移量。                         |
+| node.name.color | string          | black         | 文字颜色。                                        |
+| node.name.font  | string          |               | 文字样式。                                        |
+| node.name.textAlign | string      | center        | 文字水平方向上的对齐方式。                         |
+| node.descs      | object | null   | null          | 节点描述区域样式。                                 |
+| node.descs.height| number          | 0            | 描述区域高度。                                     |
+| node.descs.background | string     | black         | 描述区域背景颜色。                                 |
+| node.descs.font  | string          |               | 文字样式。                                        |
+| node.descs.textAlign | string      | center        | 文字水平方向上的对齐方式。                          |
+| node.descs.offset  | object[]      | []            | 描述区域文字的偏移量。                             |
+| node.descs.offset.offsetX | number | 0             | 文字在水平方向上的偏移量。                         |
+| node.descs.offset.offsetY | number | 0             | 文字在垂直方向上的偏移量。                         |
 
 #### Options Example
 ```js
 options = {
-  width: 0, // auto
+  width: 0,
   height: 0,
-  scale: [1, 1],
-  originX: 0,
-  originY: 0,
-  padding: [10, 50],
+  padding: [20],
+  background: '',
+  lineColor: 'black',
   node: {
-    width: 60,
-    height: 160,
+    width: 100,
+    height: 100,
     spacing: [20, 20],
-    color: 'white',
-    background: 'cornflowerblue',
-    customBackgrounds: [
-      {
-        attributeName: 'sex',
-        checkOwn: false,
-        color: {
-          0: 'cornflowerblue',
-          1: 'lightcoral'
+    radii: 8,
+    background: 'white',
+    borderColor: 'black',
+    avatar: {
+      url: '',
+      offsetX: 0,
+      offsetY: 0,
+      width: 0,
+      height: 0,
+      circle: false
+    },
+    name: {
+      offsetX: 0,
+      offsetY: 50,
+      color: 'black',
+      font: '14px sans-serif',
+      textAlign: 'center',
+    },
+    descs: {
+      height: 0,
+      color: 'black',
+      background: 'white',
+      font: '12px sans-serif',
+      textAlign: 'center',
+      offset: [
+        {
+          offsetX: 0,
+          offsetY: 100,
+        },
+        {
+          offsetX: 0,
+          offsetY: 200,
         }
-      },
-      {
-        attributeName: 'self',
-        checkOwn: true,
-        color: 'black'
-      }
-    ],
-    defaultAvatar: '/images/male.jpg',
-    customAvatar: {
-      attributeName: 'sex',
-      avatars: {
-        0: '/images/male.jpg',
-        1: '/images/female.jpg'
-      }
+      ]
     },
   },
-  nodeTemplate: [
-    {
-      attributeName: 'spouse',
-      checkOwn: true,
-      width: 120,
-      draw: function(that, ctx, x, y, node) {
-        that.drawAvatar(ctx, x, y, node)
-        that.drawAvatar(ctx, x + this.width / 2, y, node.spouse)
-        // node color
-        if (node.sex === 0) {
-          ctx.fillStyle = 'cornflowerblue'
-        } else {
-          ctx.fillStyle = 'lightcoral'
-        }
-      
-        ctx.fillRect(x, y + that.nodeWidth, that.nodeWidth, that.nodeHeight - that.nodeWidth)
-        if (node.spouse && node.spouse.sex === 0) {
-          ctx.fillStyle = 'cornflowerblue'
-        } else if (node.spouse && node.spouse.sex === 1) {
-          ctx.fillStyle = 'lightcoral'
-        }
-        ctx.fillRect(x + this.width / 2, y + that.nodeWidth, that.nodeWidth, that.nodeHeight - that.nodeWidth)
-        ctx.stroke()
-        const textHeight = that.nodeHeight - that.nodeWidth
-        that.drawVerticalText(ctx, x, y + that.nodeWidth, that.nodeWidth, textHeight, node.name)
-        that.drawVerticalText(ctx, x + this.width / 2, y + that.nodeWidth, that.nodeWidth, textHeight, node.spouse.name)
-      }
-    }
-  ]
 }
 ```
-The nodeTemplate can write multiple objects inside,each object is drawn for a different property.
-Explain what each of its properties does:
-
-|      Name     |      Type     |    Default    |                    Description                   |
-| ------------- | ------------- | ------------- | ------------------------------------------------ |
-| attributeName | string        |               | The node that owns this property uses this custom template.   |
-| checkOwn      | boolean       |               | Check whether the node owns this property.       |
-| width         | number        | 60            | The node width.                                  |
-| draw          | function      | null          | How to draw this node.                           |
 
 ### Methods
-
-#### render(canvas, data)
-It's the useful way when users want to re-initialize or refresh orgchart based on new options or reload new data.
-
-### Property
-
-#### currentSelected
-Get the node that is currently selected.
+|       Name      |       Params    |    Returns    |                    Description                   |
+| --------------- | --------------- | ------------- | ------------------------------------------------ |
+| render          | data            | undefined     | 渲染组织结构图。                                  |
+| addEventListener| event, callBack | undefined     | 注册监听器，当触发指定事件时，对应的回调函数被执行。目前仅支持 select 事件。|
 
 ## Screenshots
 ![](./screenshots/canvas-orgchart.png)
