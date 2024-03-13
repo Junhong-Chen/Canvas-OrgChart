@@ -92,8 +92,13 @@ export default class CanvasOrgChart {
       if (data) {
         const _data = JSON.parse(JSON.stringify(data)) 
         this.calcNodesPosition(_data, this.originY)
-        this.#chartWidth -= this.#lastedSpacing
-        this.setCanvasSize(canvas, this.options.width || (this.#chartWidth + this.options.padding[1]), this.options.height || (this.#chartHeight + this.options.padding[2]))
+        this.#chartWidth += this.options.padding[1] - this.#lastedSpacing
+        this.#chartHeight += this.options.padding[2]
+        this.setCanvasSize(
+          canvas,
+          this.options.width || this.#chartWidth,
+          this.options.height || this.#chartHeight
+        )
         this.drawChart(this.ctx, _data, false)
         canvas.addEventListener('click', this.selectEvent(_data).bind(this))
       } else {
@@ -144,13 +149,19 @@ export default class CanvasOrgChart {
       this.#lastedSpacing = spacing[0]
     } else {
       y += height + spacing[1]
+      const firstChild = node.children.at(0)
+      const lastChild = node.children.at(-1)
       for (let item of node.children) {
         this.calcNodesPosition(item, y)
       }
       if (length === 1) {
-        node.nodeAttr.x = node.children[0].x
+        node.nodeAttr.x = firstChild.x
       } else {
-        node.nodeAttr.x = Math.round(node.children[0].nodeAttr.x + (node.children[length - 1].nodeAttr.x - node.children[0].nodeAttr.x) / 2)
+        node.nodeAttr.x = Math.round(
+          firstChild.nodeAttr.x
+          + (lastChild.nodeAttr.x - firstChild.nodeAttr.x)
+          / 2
+        )
       }
     }
   }
@@ -172,7 +183,12 @@ export default class CanvasOrgChart {
   drawBackground(ctx) {
     ctx.save()
     ctx.fillStyle = this.options.background
-    ctx.fillRect(0, 0, this.options.width || (this.#chartWidth + this.options.padding[1]), this.options.height || (this.#chartHeight + this.options.padding[2]))
+    ctx.fillRect(
+      0,
+      0,
+      this.options.width || this.#chartWidth,
+      this.options.height || this.#chartHeight
+    )
     ctx.restore()
   }
 
@@ -397,10 +413,11 @@ export default class CanvasOrgChart {
       const x = (event.clientX - rect.left)
       const y = (event.clientY - rect.top)
       // 判断点击坐标是否在 tree chart 绘制范围内和是否重复点击
+      const [ pTop, pRight, pBottom, pLeft ] = this.options.padding
       if (pointInRect(
         [this.originX, this.originY],
-        this.#chartWidth - this.options.padding[3],
-        this.#chartHeight - this.options.padding[0],
+        this.#chartWidth - pLeft - pRight,
+        this.#chartHeight - pTop - pBottom,
         x,
         y
       )) {

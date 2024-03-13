@@ -8,6 +8,33 @@ function _classPrivateFieldGet2(s, a) {
 function _classPrivateFieldSet2(s, a, r) {
   return s.set(_assertClassBrand(s, a), r), r;
 }
+function _iterableToArrayLimit(r, l) {
+  var t = null == r ? null : "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"];
+  if (null != t) {
+    var e,
+      n,
+      i,
+      u,
+      a = [],
+      f = !0,
+      o = !1;
+    try {
+      if (i = (t = t.call(r)).next, 0 === l) {
+        if (Object(t) !== t) return;
+        f = !1;
+      } else for (; !(f = (e = i.call(t)).done) && (a.push(e.value), a.length !== l); f = !0);
+    } catch (r) {
+      o = !0, n = r;
+    } finally {
+      try {
+        if (!f && null != t.return && (u = t.return(), Object(u) !== u)) return;
+      } finally {
+        if (o) throw n;
+      }
+    }
+    return a;
+  }
+}
 function _toPrimitive(t, r) {
   if ("object" != typeof t || !t) return t;
   var e = t[Symbol.toPrimitive];
@@ -44,11 +71,17 @@ function _createClass(Constructor, protoProps, staticProps) {
   });
   return Constructor;
 }
+function _slicedToArray(arr, i) {
+  return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _unsupportedIterableToArray(arr, i) || _nonIterableRest();
+}
 function _toConsumableArray(arr) {
   return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _unsupportedIterableToArray(arr) || _nonIterableSpread();
 }
 function _arrayWithoutHoles(arr) {
   if (Array.isArray(arr)) return _arrayLikeToArray(arr);
+}
+function _arrayWithHoles(arr) {
+  if (Array.isArray(arr)) return arr;
 }
 function _iterableToArray(iter) {
   if (typeof Symbol !== "undefined" && iter[Symbol.iterator] != null || iter["@@iterator"] != null) return Array.from(iter);
@@ -68,6 +101,9 @@ function _arrayLikeToArray(arr, len) {
 }
 function _nonIterableSpread() {
   throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
+}
+function _nonIterableRest() {
+  throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
 }
 function _createForOfIteratorHelper(o, allowArrayLike) {
   var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"];
@@ -314,8 +350,9 @@ var CanvasOrgChart = /*#__PURE__*/function () {
         if (data) {
           var _data = JSON.parse(JSON.stringify(data));
           this.calcNodesPosition(_data, this.originY);
-          _classPrivateFieldSet2(_chartWidth, this, _classPrivateFieldGet2(_chartWidth, this) - _classPrivateFieldGet2(_lastedSpacing, this));
-          this.setCanvasSize(canvas, this.options.width || _classPrivateFieldGet2(_chartWidth, this) + this.options.padding[1], this.options.height || _classPrivateFieldGet2(_chartHeight, this) + this.options.padding[2]);
+          _classPrivateFieldSet2(_chartWidth, this, _classPrivateFieldGet2(_chartWidth, this) + (this.options.padding[1] - _classPrivateFieldGet2(_lastedSpacing, this)));
+          _classPrivateFieldSet2(_chartHeight, this, _classPrivateFieldGet2(_chartHeight, this) + this.options.padding[2]);
+          this.setCanvasSize(canvas, this.options.width || _classPrivateFieldGet2(_chartWidth, this), this.options.height || _classPrivateFieldGet2(_chartHeight, this));
           this.drawChart(this.ctx, _data, false);
           canvas.addEventListener('click', this.selectEvent(_data).bind(this));
         } else {
@@ -376,6 +413,8 @@ var CanvasOrgChart = /*#__PURE__*/function () {
         _classPrivateFieldSet2(_lastedSpacing, this, spacing[0]);
       } else {
         y += height + spacing[1];
+        var firstChild = node.children.at(0);
+        var lastChild = node.children.at(-1);
         var _iterator = _createForOfIteratorHelper(node.children),
           _step;
         try {
@@ -389,9 +428,9 @@ var CanvasOrgChart = /*#__PURE__*/function () {
           _iterator.f();
         }
         if (length === 1) {
-          node.nodeAttr.x = node.children[0].x;
+          node.nodeAttr.x = firstChild.x;
         } else {
-          node.nodeAttr.x = Math.round(node.children[0].nodeAttr.x + (node.children[length - 1].nodeAttr.x - node.children[0].nodeAttr.x) / 2);
+          node.nodeAttr.x = Math.round(firstChild.nodeAttr.x + (lastChild.nodeAttr.x - firstChild.nodeAttr.x) / 2);
         }
       }
     }
@@ -417,7 +456,7 @@ var CanvasOrgChart = /*#__PURE__*/function () {
     value: function drawBackground(ctx) {
       ctx.save();
       ctx.fillStyle = this.options.background;
-      ctx.fillRect(0, 0, this.options.width || _classPrivateFieldGet2(_chartWidth, this) + this.options.padding[1], this.options.height || _classPrivateFieldGet2(_chartHeight, this) + this.options.padding[2]);
+      ctx.fillRect(0, 0, this.options.width || _classPrivateFieldGet2(_chartWidth, this), this.options.height || _classPrivateFieldGet2(_chartHeight, this));
       ctx.restore();
     }
 
@@ -689,7 +728,12 @@ var CanvasOrgChart = /*#__PURE__*/function () {
         var x = event.clientX - rect.left;
         var y = event.clientY - rect.top;
         // 判断点击坐标是否在 tree chart 绘制范围内和是否重复点击
-        if (pointInRect([this.originX, this.originY], _classPrivateFieldGet2(_chartWidth, this) - this.options.padding[3], _classPrivateFieldGet2(_chartHeight, this) - this.options.padding[0], x, y)) {
+        var _this$options$padding = _slicedToArray(this.options.padding, 4),
+          pTop = _this$options$padding[0],
+          pRight = _this$options$padding[1],
+          pBottom = _this$options$padding[2],
+          pLeft = _this$options$padding[3];
+        if (pointInRect([this.originX, this.originY], _classPrivateFieldGet2(_chartWidth, this) - pLeft - pRight, _classPrivateFieldGet2(_chartHeight, this) - pTop - pBottom, x, y)) {
           // valid range
           var target = this.getSelected([data], x, y) || null;
           _classPrivateFieldGet2(_fns, this).get(EVENTS.SELECT).map(function (fn) {
