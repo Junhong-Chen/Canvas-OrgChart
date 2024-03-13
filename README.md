@@ -56,27 +56,27 @@ canvasOrgChart.render(data)
 | node.radii      | number          | 8             | 节点边角的弧度半径。                               |
 | node.background | string          | white         | 节点背景颜色。                                    |
 | node.borderColor| string          | black         | 节点边框颜色。                                    |
-| node.avatar     | object | null   | null          | 节点头像样式。                                    |
+| node.avatar     | object \| null  | null          | 节点头像样式。                                    |
 | node.avatar.url | string          |               | 节点头像图片 url 地址。                           |
 | node.avatar.offsetX  | number     | 0             | 头像在水平方向上的偏移量。                         |
 | node.avatar.offsetY  | number     | 0             | 头像在垂直方向上的偏移量。                         |
 | node.avatar.width | number        | 0             | 头像宽度。                                        |
 | node.avatar.height| number        | 0             | 头像高度。                                        |
 | node.avatar.circle| boolean       | false         | 是否为圆框头像。                                  |
-| node.name       | object | null   | null          | 节点名字样式。                                    |
+| node.name       | object \| null  | null          | 节点名字样式。                                    |
 | node.name.offsetX | number        | 0             | 文字在水平方向上的偏移量。                         |
 | node.name.offsetY | number        | 0             | 文字在垂直方向上的偏移量。                         |
 | node.name.color | string          | black         | 文字颜色。                                        |
 | node.name.font  | string          |               | 文字样式。                                        |
 | node.name.textAlign | string      | center        | 文字水平方向上的对齐方式。                         |
-| node.descs      | object | null   | null          | 节点描述区域样式。                                 |
-| node.descs.height| number          | 0            | 描述区域高度。                                     |
-| node.descs.background | string     | black         | 描述区域背景颜色。                                 |
-| node.descs.font  | string          |               | 文字样式。                                        |
-| node.descs.textAlign | string      | center        | 文字水平方向上的对齐方式。                          |
-| node.descs.offset  | object[]      | []            | 描述区域文字的偏移量。                             |
-| node.descs.offset.offsetX | number | 0             | 文字在水平方向上的偏移量。                         |
-| node.descs.offset.offsetY | number | 0             | 文字在垂直方向上的偏移量。                         |
+| node.descs      | object \| null  | null          | 节点描述区域样式。                                 |
+| node.descs.height| number         | 0             | 描述区域高度。                                     |
+| node.descs.background | string    | black         | 描述区域背景颜色。                                 |
+| node.descs.font  | string         |               | 文字样式。                                        |
+| node.descs.textAlign | string     | center        | 文字水平方向上的对齐方式。                          |
+| node.descs.offset  | object[]     | []            | 描述区域文字的偏移量。                             |
+| node.descs.offset.offsetX | number| 0             | 文字在水平方向上的偏移量。                         |
+| node.descs.offset.offsetY | number| 0             | 文字在垂直方向上的偏移量。                         |
 
 #### Options Example
 ```js
