@@ -430,8 +430,8 @@ var CanvasOrgChart = /*#__PURE__*/function () {
     key: "drawNode",
     value: function drawNode(ctx, node) {
       var _node$descs,
-        _this = this,
-        _node$children2;
+        _node$children2,
+        _this = this;
       var _node$nodeAttr2 = node.nodeAttr,
         x = _node$nodeAttr2.x,
         y = _node$nodeAttr2.y,
@@ -441,7 +441,6 @@ var CanvasOrgChart = /*#__PURE__*/function () {
         background = _node$nodeAttr2.background,
         radii = _node$nodeAttr2.radii,
         avatar = _node$nodeAttr2.avatar,
-        descs = _node$nodeAttr2.descs,
         name = _node$nodeAttr2.name;
       ctx.save();
       ctx.beginPath();
@@ -471,31 +470,7 @@ var CanvasOrgChart = /*#__PURE__*/function () {
       }
       // 描述
       if ((_node$descs = node.descs) !== null && _node$descs !== void 0 && _node$descs.length) {
-        var _descs$height = descs.height,
-          dHeight = _descs$height === void 0 ? 0 : _descs$height,
-          dBackground = descs.background,
-          _descs$offset = descs.offset,
-          offset = _descs$offset === void 0 ? [] : _descs$offset;
-        var lw = ctx.lineWidth;
-        ctx.save();
-        ctx.beginPath();
-        ctx.strokeStyle = borderColor;
-        this.drawLine(ctx, [x, y + height - dHeight], [x + width, y + height - dHeight]);
-        ctx.roundRect(x + 1, y + height - dHeight + lw, width - lw * 2, dHeight - lw * 2, [0, 0, radii, radii]);
-        ctx.fillStyle = dBackground;
-        ctx.fill();
-        ctx.restore();
-        node.descs.map(function (desc, i) {
-          var textStyle = Object.assign(descs, offset[i]);
-          _this.drawText({
-            ctx: ctx,
-            x: x,
-            y: y,
-            nodeWidth: width,
-            text: desc,
-            textStyle: textStyle
-          });
-        });
+        this.drawDescs(ctx, node);
       }
       // 连接线
       this.drawLinkLine(ctx, node);
@@ -645,6 +620,50 @@ var CanvasOrgChart = /*#__PURE__*/function () {
     }
 
     /**
+     * @method 绘制描述区域
+     * @param {object} ctx: CanvasRenderingContext2D
+     * @param {object} node
+     */
+  }, {
+    key: "drawDescs",
+    value: function drawDescs(ctx, node) {
+      var _this2 = this;
+      var _node$nodeAttr5 = node.nodeAttr,
+        x = _node$nodeAttr5.x,
+        y = _node$nodeAttr5.y,
+        width = _node$nodeAttr5.width,
+        height = _node$nodeAttr5.height,
+        descs = _node$nodeAttr5.descs,
+        borderColor = _node$nodeAttr5.borderColor,
+        radii = _node$nodeAttr5.radii;
+      var _descs$height = descs.height,
+        dHeight = _descs$height === void 0 ? 0 : _descs$height,
+        background = descs.background,
+        _descs$offset = descs.offset,
+        offset = _descs$offset === void 0 ? [] : _descs$offset;
+      var lw = ctx.lineWidth;
+      ctx.save();
+      ctx.beginPath();
+      ctx.strokeStyle = borderColor;
+      this.drawLine(ctx, [x, y + height - dHeight], [x + width, y + height - dHeight]);
+      ctx.roundRect(x + 1, y + height - dHeight + lw, width - lw * 2, dHeight - lw * 2, [0, 0, radii, radii]);
+      ctx.fillStyle = background;
+      ctx.fill();
+      ctx.restore();
+      node.descs.map(function (desc, i) {
+        var textStyle = Object.assign(descs, offset[i]);
+        _this2.drawText({
+          ctx: ctx,
+          x: x,
+          y: y,
+          nodeWidth: width,
+          text: desc,
+          textStyle: textStyle
+        });
+      });
+    }
+
+    /**
      * @method 设置canvas宽高
      * @param {object} ctx: CanvasRenderingContext2D
      * @param {number} width
@@ -695,11 +714,11 @@ var CanvasOrgChart = /*#__PURE__*/function () {
         for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
           var _node$children3;
           var node = _step2.value;
-          var _node$nodeAttr5 = node.nodeAttr,
-            nX = _node$nodeAttr5.x,
-            nY = _node$nodeAttr5.y,
-            width = _node$nodeAttr5.width,
-            height = _node$nodeAttr5.height;
+          var _node$nodeAttr6 = node.nodeAttr,
+            nX = _node$nodeAttr6.x,
+            nY = _node$nodeAttr6.y,
+            width = _node$nodeAttr6.width,
+            height = _node$nodeAttr6.height;
           if (pointInRect([nX, nY], width, height, x, y)) {
             return node;
           } else if ((_node$children3 = node.children) !== null && _node$children3 !== void 0 && _node$children3.length) {

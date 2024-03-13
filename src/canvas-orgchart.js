@@ -182,7 +182,7 @@ export default class CanvasOrgChart {
    * @param {object} node
    */ 
   drawNode(ctx, node) {
-    const { x, y, width, height, borderColor, background, radii, avatar, descs, name } = node.nodeAttr
+    const { x, y, width, height, borderColor, background, radii, avatar, name } = node.nodeAttr
     ctx.save()
     ctx.beginPath()
     // 填充
@@ -211,37 +211,7 @@ export default class CanvasOrgChart {
     }
     // 描述
     if (node.descs?.length) {
-      const { height: dHeight = 0, background: dBackground, offset = [] } = descs
-      const lw = ctx.lineWidth
-      ctx.save()
-      ctx.beginPath()
-      ctx.strokeStyle = borderColor
-      this.drawLine(
-        ctx,
-        [x, y + height - dHeight],
-        [x + width, y + height - dHeight]
-      )
-      ctx.roundRect(
-        x + 1,
-        y + height - dHeight + lw,
-        width - lw * 2,
-        dHeight - lw * 2,
-        [0, 0, radii, radii]
-      )
-      ctx.fillStyle = dBackground
-      ctx.fill()
-      ctx.restore()
-      node.descs.map((desc, i) => {
-        const textStyle = Object.assign(descs, offset[i])
-        this.drawText({
-          ctx,
-          x,
-          y,
-          nodeWidth: width,
-          text: desc,
-          textStyle
-        })
-      })
+      this.drawDescs(ctx, node)
     }
     // 连接线
     this.drawLinkLine(ctx, node)
@@ -363,6 +333,46 @@ export default class CanvasOrgChart {
         [node.children[length - 1].nodeAttr.x + width / 2, _y]
       )
     }
+  }
+
+  /**
+   * @method 绘制描述区域
+   * @param {object} ctx: CanvasRenderingContext2D
+   * @param {object} node
+   */
+  drawDescs(ctx, node) {
+    const { x, y, width, height, descs, borderColor, radii } = node.nodeAttr
+    const { height: dHeight = 0, background, offset = [] } = descs
+    const lw = ctx.lineWidth
+    ctx.save()
+    ctx.beginPath()
+    ctx.strokeStyle = borderColor
+    this.drawLine(
+      ctx,
+      [x, y + height - dHeight],
+      [x + width, y + height - dHeight]
+    )
+    ctx.roundRect(
+      x + 1,
+      y + height - dHeight + lw,
+      width - lw * 2,
+      dHeight - lw * 2,
+      [0, 0, radii, radii]
+    )
+    ctx.fillStyle = background
+    ctx.fill()
+    ctx.restore()
+    node.descs.map((desc, i) => {
+      const textStyle = Object.assign(descs, offset[i])
+      this.drawText({
+        ctx,
+        x,
+        y,
+        nodeWidth: width,
+        text: desc,
+        textStyle
+      })
+    })
   }
 
   /**
