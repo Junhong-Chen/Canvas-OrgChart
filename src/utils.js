@@ -1,3 +1,13 @@
+
+/**
+ * @method 判断是否为函数
+ * @param {function} fn
+ * @return {boolean}
+ */
+function isFunc(fn) {
+  return fn instanceof Function
+}
+
 /**
  * @method 判断某个点是否在矩形中
  * @param {number[]} origin: 矩形左上角坐标
@@ -68,4 +78,4 @@ function reverseAssign(target) {
   return from
 }
 
-export { pointInRect, getCrossProduct, reverseAssign }
+export { isFunc, pointInRect, getCrossProduct, reverseAssign }

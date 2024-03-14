@@ -167,6 +167,15 @@ function _classPrivateFieldInitSpec(obj, privateMap, value) {
 }
 
 /**
+ * @method 判断是否为函数
+ * @param {function} fn
+ * @return {boolean}
+ */
+function isFunc(fn) {
+  return fn instanceof Function;
+}
+
+/**
  * @method 判断某个点是否在矩形中
  * @param {number[]} origin: 矩形左上角坐标
  * @param {number} width: 矩形宽度
@@ -239,7 +248,7 @@ function reverseAssign(target) {
 var EVENTS = {
   SELECT: 'select'
 };
-var _fns = /*#__PURE__*/new WeakMap();
+var _cbs = /*#__PURE__*/new WeakMap();
 var _chartWidth = /*#__PURE__*/new WeakMap();
 var _chartHeight = /*#__PURE__*/new WeakMap();
 var _lastedSpacing = /*#__PURE__*/new WeakMap();
@@ -249,7 +258,7 @@ var CanvasOrgChart = /*#__PURE__*/function () {
       node: {}
     };
     _classCallCheck(this, CanvasOrgChart);
-    _classPrivateFieldInitSpec(this, _fns, new Map());
+    _classPrivateFieldInitSpec(this, _cbs, new Map());
     _classPrivateFieldInitSpec(this, _chartWidth, 0);
     _classPrivateFieldInitSpec(this, _chartHeight, 0);
     _classPrivateFieldInitSpec(this, _lastedSpacing, 0);
@@ -371,10 +380,33 @@ var CanvasOrgChart = /*#__PURE__*/function () {
   }, {
     key: "addEventListener",
     value: function addEventListener(event, cb) {
-      if (!_classPrivateFieldGet2(_fns, this).has(event)) {
-        _classPrivateFieldGet2(_fns, this).set(event, []);
+      if (!isFunc(cb)) {
+        throw TypeError('callback is not a Function.');
       }
-      _classPrivateFieldGet2(_fns, this).get(event).push(cb);
+      if (!_classPrivateFieldGet2(_cbs, this).has(event)) {
+        _classPrivateFieldGet2(_cbs, this).set(event, []);
+      }
+      _classPrivateFieldGet2(_cbs, this).get(event).push(cb);
+    }
+
+    /**
+     * @method 监听事件移除
+     * @param {string} event 事件名
+     * @param {function} cb 回调函数
+     */
+  }, {
+    key: "removeEventListener",
+    value: function removeEventListener(type, cb) {
+      if (!isFunc(cb)) {
+        throw TypeError('callback is not a Function.');
+      }
+      var fns = _classPrivateFieldGet2(_cbs, this).get(type);
+      var i = fns.findIndex(function (el) {
+        return el === cb;
+      });
+      if (i > -1) {
+        fns.splice(i, 1);
+      }
     }
 
     /**
@@ -736,7 +768,7 @@ var CanvasOrgChart = /*#__PURE__*/function () {
         if (pointInRect([this.originX, this.originY], _classPrivateFieldGet2(_chartWidth, this) - pLeft - pRight, _classPrivateFieldGet2(_chartHeight, this) - pTop - pBottom, x, y)) {
           // valid range
           var target = this.getSelected([data], x, y) || null;
-          _classPrivateFieldGet2(_fns, this).get(EVENTS.SELECT).map(function (fn) {
+          _classPrivateFieldGet2(_cbs, this).get(EVENTS.SELECT).map(function (fn) {
             fn(target);
           });
         }

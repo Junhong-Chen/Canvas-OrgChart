@@ -133,7 +133,8 @@ options = {
 |       Name      |       Params    |    Returns    |                    Description                   |
 | --------------- | --------------- | ------------- | ------------------------------------------------ |
 | render          | data            | undefined     | 渲染组织结构图。                                  |
-| addEventListener| event, callBack | undefined     | 注册监听器，当触发指定事件时，对应的回调函数被执行。目前仅支持 select 事件。|
+| addEventListener| event, callBack | undefined     | 注册事件监听器，当触发指定事件时，对应的回调函数被执行。目前仅支持 select 事件。|
+| removeEventListener | event, callBack | undefined | 注销事件监听器。                                  |
 
 ## Screenshots
 ![](./screenshots/canvas-orgchart.png)

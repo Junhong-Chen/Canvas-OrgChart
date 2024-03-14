@@ -1,11 +1,11 @@
-import { pointInRect, reverseAssign } from './utils.js'
+import { isFunc, pointInRect, reverseAssign } from './utils.js'
 
 const EVENTS = {
   SELECT: 'select'
 }
 
 export default class CanvasOrgChart {
-  #fns = new Map()
+  #cbs = new Map()
   #chartWidth = 0
   #chartHeight = 0
   #lastedSpacing = 0
@@ -115,10 +115,30 @@ export default class CanvasOrgChart {
    * @param {function} cb 回调函数
    */
   addEventListener(event, cb) {
-    if (!this.#fns.has(event)) {
-      this.#fns.set(event, [])
+    if (!isFunc(cb)) {
+      throw TypeError('callback is not a Function.')
     }
-    this.#fns.get(event).push(cb)
+    if (!this.#cbs.has(event)) {
+      this.#cbs.set(event, [])
+    }
+    this.#cbs.get(event).push(cb)
+  }
+
+  /**
+   * @method 监听事件移除
+   * @param {string} event 事件名
+   * @param {function} cb 回调函数
+   */
+  removeEventListener(type, cb) {
+    if (!isFunc(cb)) {
+      throw TypeError('callback is not a Function.')
+    }
+
+    const fns = this.#cbs.get(type)
+    const i = fns.findIndex(el => el === cb)
+    if (i > -1) {
+      fns.splice(i, 1)
+    }
   }
 
   /**
@@ -423,7 +443,7 @@ export default class CanvasOrgChart {
       )) {
         // valid range
         const target = this.getSelected([data], x, y) || null
-        this.#fns.get(EVENTS.SELECT).map((fn) => {
+        this.#cbs.get(EVENTS.SELECT).map((fn) => {
           fn(target)
         })
       }

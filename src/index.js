@@ -99,9 +99,14 @@ dataFormat(data)
 
 canvasOrgChart.render(data)
 
-canvasOrgChart.addEventListener('select', function(node) {
-  if (node) alert(node.name)
-})
+
+function cb(node) {
+  if (node) {
+    alert(node.name)
+    canvasOrgChart.removeEventListener('select', cb)
+  }
+}
+canvasOrgChart.addEventListener('select', cb)
 
 $('.export').addEventListener('click', function() {
   const anchor = document.createElement('a')
