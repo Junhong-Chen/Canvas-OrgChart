@@ -1,5 +1,5 @@
 # Canvas-OrgChart
-使用 canvas 绘制组织结构图.
+基于 canvas 元素绘制组织架构图.
 
 ## Installation
 <!-- Of course, you can directly use the standalone build by including canvas-orgchart.js in your webapps. -->
@@ -48,7 +48,7 @@ canvasOrgChart.render(data)
 | height          | number          | 0             | Canvas 高度，填 0 时自动计算高度。                 |
 | padding         | array           | [0, 0, 0, 0]  | Canvas 内边距，和 CSS padding 类似。              |
 | background      | string          | transparent   | Canvas 背景颜色。                                 |
-| lineColor       | string          | black         | 组织结构图中连接线的颜色。                          |
+| lineColor       | string          | black         | 组织架构图中连接线的颜色。                          |
 | node            | object          |               | 节点样式。                                        |
 | node.width      | number          | 0             | 节点宽度。                                        |
 | node.height     | number          | 0             | 节点高度。                                        |
@@ -132,7 +132,7 @@ options = {
 ### Methods
 |       Name      |       Params    |    Returns    |                    Description                   |
 | --------------- | --------------- | ------------- | ------------------------------------------------ |
-| render          | data            | undefined     | 渲染组织结构图。                                  |
+| render          | data            | undefined     | 渲染组织架构图。                                  |
 | addEventListener| event, callBack | undefined     | 注册事件监听器，当触发指定事件时，对应的回调函数被执行。目前仅支持 select 事件。|
 | removeEventListener | event, callBack | undefined | 注销事件监听器。                                  |
 
